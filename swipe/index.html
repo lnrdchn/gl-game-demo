@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>모임? 팀? · 모임이 아닌, "팀"</title>
+<style>
+  /* ===== 공통 토큰 (세 페이지 동일) ===== */
+  :root {
+    --page: #f3f5f9; --surface: #ffffff; --ink: #1b2a4a; --muted: #5b6680; --line: #d9dee8; --tint: #eef1f6;
+    --mark: #ffe14d; --mark-edge: #e6c200; --chat: #d6e0eb;
+    --purpose: #3b82f6; --commitment: #ef6c4a; --rules: #8b5cf6; --interdependence: #10a37f;
+    --good: #16a34a; --half: #d97706; --bad: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; background: var(--page); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; line-height: 1.6; }
+  a { color: inherit; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--purpose); outline-offset: 3px; border-radius: 8px; }
+
+  .sitebar { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: var(--surface); border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px; text-decoration: none; letter-spacing: -0.01em; }
+  .dots { display: inline-grid; grid-template-columns: repeat(2, 7px); gap: 3px; }
+  .dots i { width: 7px; height: 7px; border-radius: 2px; display: block; }
+  .sitebar nav { display: flex; gap: 4px; }
+  .sitebar nav a { font-size: 14px; text-decoration: none; color: var(--muted); padding: 6px 12px; border-radius: 8px; }
+  .sitebar nav a:hover { background: var(--tint); color: var(--ink); }
+  .sitebar nav a[aria-current="page"] { color: var(--ink); font-weight: 700; background: var(--tint); }
+
+  main { flex: 1; width: 100%; max-width: 560px; margin: 0 auto; padding: 22px 18px 28px; display: flex; flex-direction: column; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .top h1 { font-size: 20px; margin: 0; letter-spacing: -0.02em; }
+  .progress { display: flex; gap: 4px; }
+  .progress i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); display: block; }
+  .progress i.now { background: var(--ink); }
+  .progress i.good { background: var(--good); }
+  .progress i.half { background: var(--half); }
+  .progress i.bad { background: var(--bad); }
+
+  /* 카드 무대 */
+  .stage { position: relative; flex: 1; min-height: 400px; }
+  .card { position: absolute; inset: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 24px 22px; display: flex; flex-direction: column; box-shadow: 0 18px 36px -26px rgba(27, 42, 74, .5); touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+  .card.under { transform: scale(.95) translateY(12px); opacity: .6; pointer-events: none; }
+  .card.live { cursor: grab; }
+  .card.live:active { cursor: grabbing; }
+  .card.fly { transition: transform .32s ease-in, opacity .32s ease-in; }
+  .card.back { transition: transform .25s ease; }
+  .card .when { font-size: 13px; color: var(--muted); margin-bottom: 10px; display: flex; justify-content: space-between; }
+  .card .scene { font-size: 19px; line-height: 1.6; word-break: keep-all; margin: 0 0 16px; }
+  .card .quote { align-self: flex-start; background: var(--chat); border-radius: 4px 14px 14px 14px; padding: 9px 13px; font-size: 15px; line-height: 1.5; word-break: keep-all; max-width: 92%; }
+  .card .quote small { display: block; font-size: 12px; color: var(--muted); }
+  .card .ask { margin-top: auto; padding-top: 18px; font-size: 14px; color: var(--muted); text-align: center; }
+  .stamp { position: absolute; top: 46%; font-size: 26px; font-weight: 800; padding: 2px 14px; border-radius: 10px; border: 3px solid; opacity: 0; pointer-events: none; }
+  .stamp.left { left: 24px; color: var(--muted); border-color: var(--muted); transform: rotate(-10deg); }
+  .stamp.right { right: 24px; color: var(--ink); border-color: var(--ink); background: var(--mark); transform: rotate(10deg); }
+
+  /* 고르기·풀이 카드 */
+  .panel h2 { font-size: 21px; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .panel p { margin: 6px 0; font-size: 15px; word-break: keep-all; }
+  .conds { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .conds button { text-align: left; padding: 14px 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); cursor: pointer; font-size: 16px; font-weight: 700; border-left: 6px solid var(--c); }
+  .conds button small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }
+  .conds button:hover { background: var(--tint); }
+  .verdict { display: inline-block; font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 999px; color: #fff; margin-bottom: 10px; }
+  .answer { font-size: 20px; font-weight: 800; margin: 0 0 10px; letter-spacing: -0.02em; }
+  .why { font-size: 15px; }
+  .tip { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--tint); font-size: 14px; word-break: keep-all; }
+  .tip b { font-weight: 800; }
+  .tag { font-size: 12px; color: var(--muted); }
+  .panel .next { margin-top: auto; }
+
+  /* 아래 버튼 */
+  .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .btn { padding: 14px 10px; border-radius: 14px; border: 1.5px solid var(--ink); background: var(--surface); font-size: 17px; font-weight: 800; cursor: pointer; }
+  .btn.team { background: var(--mark); border-color: var(--mark-edge); }
+  .btn.wide { grid-column: 1 / -1; background: var(--ink); color: #fff; border-color: var(--ink); }
+  .btn.wide.plain { background: var(--surface); color: var(--ink); border-color: var(--line); }
+  .btn small { display: block; font-size: 12px; font-weight: 400; opacity: .75; }
+  .btn:disabled { opacity: .35; cursor: default; }
+  .keys { text-align: center; font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+  /* 시작·결과 */
+  .intro h2 { font-size: 34px; margin: 0 0 6px; letter-spacing: -0.04em; }
+  .intro .en { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+  .howto { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; align-items: center; margin: 14px 0; font-size: 15px; }
+  .howto .k { font-weight: 800; padding: 4px 10px; border-radius: 8px; border: 1.5px solid var(--ink); text-align: center; }
+  .howto .k.team { background: var(--mark); border-color: var(--mark-edge); }
+  .score { display: flex; gap: 10px; margin: 12px 0 16px; }
+  .score div { flex: 1; background: var(--tint); border-radius: 12px; padding: 10px; text-align: center; font-size: 13px; color: var(--muted); }
+  .score b { display: block; font-size: 24px; color: var(--ink); }
+  .bycond { display: grid; gap: 6px; margin: 8px 0 14px; }
+  .bycond .row { display: grid; grid-template-columns: 90px 1fr 44px; gap: 8px; align-items: center; font-size: 14px; }
+  .bycond .bar { height: 9px; background: var(--tint); border-radius: 99px; overflow: hidden; }
+  .bycond .bar i { display: block; height: 100%; border-radius: 99px; }
+  .bycond .row b { text-align: right; font-variant-numeric: tabular-nums; }
+  .traps { list-style: none; padding: 0; margin: 6px 0 12px; }
+  .traps li { font-size: 14px; padding: 8px 10px; border-radius: 10px; background: var(--tint); margin: 6px 0; word-break: keep-all; }
+  .traps li b { font-weight: 800; }
+  .scroll { overflow-y: auto; }
+  .links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .links a { font-size: 14px; text-decoration: none; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
+  .muted { color: var(--muted); font-size: 13px; }
+
+  @media (min-width: 900px) {
+    main { max-width: 640px; padding-top: 34px; }
+    .stage { flex: 0 0 auto; height: 430px; min-height: 0; }
+    .card .scene { font-size: 21px; }
+  }
+  @media (max-width: 560px) {
+    .sitebar { padding: 0 16px; }
+    .sitebar nav { display: none; }
+    .card .scene { font-size: 17px; }
+    .stage { min-height: 430px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .card.fly, .card.back { transition: none; } }
+</style>
+</head>
+<body>
+<header class="sitebar">
+  <a class="brand" href="../index.html">
+    <span class="dots" aria-hidden="true"><i style="background:var(--purpose)"></i><i style="background:var(--commitment)"></i><i style="background:var(--rules)"></i><i style="background:var(--interdependence)"></i></span>
+    모임이 아닌, "팀"
+  </a>
+  <nav><a href="../game/index.html">조장 시뮬레이터</a><a href="../debugger/index.html">팀 디버거</a><a href="index.html" aria-current="page">모임? 팀?</a></nav>
+</header>
+
+<main>
+  <div class="top">
+    <h1>모임? 팀?</h1>
+    <div class="progress" id="progress" aria-label="진행 상황"></div>
+  </div>
+  <div class="stage" id="stage" aria-live="polite"></div>
+  <div class="controls" id="controls"></div>
+  <div class="keys" id="keys"></div>
+</main>
+
+<script>
+/* =========================================================
+   근거: 9주차 Building a Team 6–10쪽
+   카드 12장: 조건 하나가 빠진 '모임' 8장(조건마다 2장) + '팀' 4장
+   함정 카드(trap): 겉보기와 정답이 다른 카드
+   ========================================================= */
+const CONDITIONS = {
+  purpose:         { name: "공동 목적",   page: 7,  color: "var(--purpose)" },
+  commitment:      { name: "헌신",       page: 8,  color: "var(--commitment)" },
+  rules:           { name: "운영 규칙",   page: 9,  color: "var(--rules)" },
+  interdependence: { name: "상호의존성", page: 10, color: "var(--interdependence)" },
+};
+const KEYS = ["purpose", "commitment", "rules", "interdependence"];
+
+const CARDS = [
+  { when: "첫 회의",
+    scene: "발표 주제는 정했다. 그런데 이 발표가 누구에게 무엇을 전하려는 건지는 아무도 묻지 않았다.",
+    quote: { who: "조장", text: "일단 각자 맡은 거 조사해 오자! 합치면서 맞추면 돼" },
+    team: false, missing: "purpose",
+    why: "주제는 있지만 \"우리는 왜 여기 있나?\"에 답할 수 없다(7쪽). 모두 다른 방향으로 조사해 오게 된다.",
+    tip: "조사 전에 \"발표가 끝나면 누가 뭘 하게 되면 성공인지\"를 한 문장으로 같이 정한다." },
+  { when: "초안 마감",
+    scene: "\"금요일까지 올려 줘\"라는 공지에 누구는 금요일 아침, 누구는 금요일 자정까지로 알았다. 파일은 드라이브, 노션, 단톡방에 흩어졌다.",
+    quote: { who: "조원", text: "최종이 세 개인데 뭐가 진짜 최종이야?" },
+    team: false, missing: "rules",
+    why: "함께 일하는 방식이 예측 가능하지 않다(9쪽). 다들 열심히 할수록 혼란만 커진다.",
+    tip: "\"금요일 18시, 드라이브 '자료' 폴더, 파일명은 이름_파트\"처럼 숫자와 장소로 같이 정한다." },
+  { when: "결론 회의", trap: true,
+    scene: "결론을 두고 의견이 크게 갈렸다. 처음에 정해 둔 대로 양쪽이 근거를 3분씩 말하고, 목적 문장에 더 맞는 쪽으로 정했다.",
+    quote: { who: "의견이 밀린 조원", text: "그 기준이면 인정. 대신 내 아이디어는 마지막 장에 살려 줘" },
+    team: true,
+    why: "갈등이 있다고 팀이 아닌 건 아니다. 팀에는 갈등을 해결하는 정해진 방식이 있다(9쪽). 이 조는 미리 정한 방식과 함께 정한 목적(7쪽)으로 정리했다." },
+  { when: "중간 점검",
+    scene: "한 조원이 설문 응답이 아직 6명뿐이라고 말했다. 그 뒤로 그 조원은 막혀도 단톡방에 말하지 않았다.",
+    quote: { who: "다른 조원", text: "6명? 이 정도면 무임승차 아님? ㅋㅋ" },
+    team: false, missing: "commitment",
+    why: "두려움과 위협의 분위기에서는 해야 할 일을 기꺼이 맡기 어렵다(8쪽). 막힌 걸 말하지 못하면 그 일은 끝까지 비어 있게 된다.",
+    tip: "\"어디서 막혔어? 설문 링크 같이 돌려 보자\"처럼 묻고 같이 나눈다." },
+  { when: "제출 전날", trap: true,
+    scene: "역할을 다섯 개로 깔끔하게 나눴다. 다들 마감 전에 자기 파트를 냈고, 조장이 순서대로 붙여서 제출했다. 다른 사람 파트를 읽은 사람은 없었다.",
+    quote: { who: "조원", text: "나는 내 거 다 했으니까 끝!" },
+    team: false, missing: "interdependence",
+    why: "역할 분담과 성실함만으로는 팀이 되지 않는다. 각자 자기 일만 챙기면 모임이다(6·10쪽). 서로의 파트가 이어지는지 아무도 보지 않았다.",
+    tip: "합치기 전에 처음부터 끝까지 같이 넘겨 보고, 앞뒤 파트가 이어지는지 확인한다." },
+  { when: "첫 주",
+    scene: "교환학생 조원이 한국어 회의가 너무 빠르다고 말했다. 그래서 회의 끝에 결정 사항을 세 줄로 정리해 올리는 규칙을 같이 만들었다.",
+    quote: { who: "교환학생 조원", text: "정리 보고 자막 일정 먼저 맞춰 둘게요!" },
+    team: true,
+    why: "일하는 방식(규칙)을 구성원 상황에 맞게 같이 만들었고(9쪽), 그 덕분에 그 조원이 다른 사람 일정에 맞춰 자기 일을 이었다(10쪽)." },
+  { when: "방향 정하기", trap: true,
+    scene: "조장이 혼자 방향을 정해 공지했다. 다들 군말 없이 따랐지만, 왜 이 방향인지 설명할 수 있는 사람은 조장뿐이었다.",
+    quote: { who: "조원", text: "조장이 하라는 대로 하면 되지 뭐" },
+    team: false, missing: "purpose",
+    why: "방향은 있지만 구성원과 공유되지 않았다. 리더는 비전을 전달하고 구성원이 각자의 비전을 세우도록 도와야 한다(7쪽). 지시만 따르는 사람들의 모임은 팀이 아니다(6쪽).",
+    tip: "방향을 정할 때 이유를 같이 말하고, 조원이 자기 말로 설명할 수 있는지 확인한다." },
+  { when: "마감 공지", trap: true,
+    scene: "조장의 공지 뒤로 그 주 마감은 모두 지켜졌다. 그런데 회의에서 의견을 내는 사람이 사라졌다.",
+    quote: { who: "조장", text: "다음부터 늦으면 기여도 평가에 반영할게" },
+    team: false, missing: "commitment",
+    why: "마감은 지켜졌지만 위협으로 만든 분위기다. 동기부여 대신 두려움 속에서는 시키는 만큼만 하게 된다(8쪽). 규칙이 서도 헌신은 무너질 수 있다.",
+    tip: "규칙은 위에서 통보하지 말고 같이 정한다. 늦는 이유부터 묻는다." },
+  { when: "작업 나누기",
+    scene: "참고 문헌 정리처럼 나눠도 되는 일은 각자 했다. 대신 대본과 편집처럼 서로 얽힌 일은 매일 저녁 10분씩 같이 봤다.",
+    quote: { who: "편집 담당", text: "대본 3장 바뀐 거 오늘 봤으니까 바로 반영할게" },
+    team: true, interp: true,
+    why: "[해석] 협력은 많을수록 좋은 게 아니라 일에 맞게 해야 한다. 나눠도 되는 일은 나누고, 서로 얽힌 일은 동료의 작업과 이어지는 부분을 함께 살폈다(10쪽)." },
+  { when: "회의 세 번째",
+    scene: "회의 때마다 결정을 다음 회의로 미뤘다. 누가, 언제까지, 어떻게 정할지 정한 적이 없어서 같은 이야기를 세 번째 하고 있다.",
+    quote: { who: "조원", text: "그래서… 우리 오늘 뭐 정했지?" },
+    team: false, missing: "rules",
+    why: "상호작용하고 결정하는 정해진 방식이 없다(9쪽). 같은 논의만 되풀이되고 일이 앞으로 나가지 않는다.",
+    tip: "\"목요일까지, 근거 말하고 투표\"처럼 결정하는 방식부터 같이 정한다." },
+  { when: "성적 발표", trap: true,
+    scene: "발표는 A+를 받았다. 사실 조장이 사흘 밤을 새워 다른 사람 파트까지 다시 만들었다. 조원들은 발표 당일에 완성본을 처음 봤다.",
+    quote: { who: "조원", text: "와 우리 A+네! 역시 우리 조 ㅋㅋ" },
+    team: false, missing: "interdependence", alsoOk: ["commitment"],
+    why: "결과물이 좋아도 팀은 아니었다. 팀에서는 팀 전체가 함께 성공하거나 실패하고, 혼자 이기는 팀원은 없다(10쪽). 조원들은 동료의 일에 함께하지 않았다.",
+    alsoWhy: "헌신(8쪽)이 빠졌다고 봐도 맞다. 조원들이 맡은 일을 끝까지 하지 않았다.",
+    tip: "조장이 대신 메우기 전에 \"어디서 막혔어?\"를 묻고 일을 다시 나눈다." },
+  { when: "중간 점검",
+    scene: "한 조원이 자기 파트 이론을 잘 모르겠다고 털어놨다. 다른 조원이 10분 설명해 줬고, 그 조원은 자기 파트를 끝까지 맡았다.",
+    quote: { who: "조원", text: "솔직히 저 이 부분 모르겠어요. 같이 봐 줄 수 있어요?" },
+    team: true,
+    why: "막힌 걸 말할 수 있었고, 동료가 도왔고, 맡은 일을 끝까지 했다. 동기부여된 분위기에서 기꺼이 맡는 헌신이다(8쪽). [강의 외] 이런 분위기를 심리적 안전감이라고도 부른다." },
+];
+
+/* ---------- 상태 ---------- */
+const state = { i: -1, results: [], phase: "intro", side: null };
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function renderProgress() {
+  $("progress").innerHTML = CARDS.map((_, j) => {
+    const r = state.results[j];
+    const cls = r ? r.level : j === state.i && state.phase !== "end" ? "now" : "";
+    return `<i class="${cls}"></i>`;
+  }).join("");
+}
+
+/* ---------- 시작 ---------- */
+function intro() {
+  state.phase = "intro"; state.i = -1; state.results = [];
+  renderProgress();
+  $("stage").innerHTML = "";
+  const c = el("div", "card panel intro scroll");
+  c.innerHTML = `
+    <h2>모임? 팀?</h2>
+    <p class="en">Not all groups are teams. (9주차 6쪽)</p>
+    <p>팀플 장면 카드가 12장 나와요. 이 사람들이 <b>팀</b>인지, 아직 <b>모임</b>인지 골라 주세요.</p>
+    <div class="howto">
+      <span class="k">← 모임</span><span>네 조건 중 하나가 빠졌다. 빠진 조건까지 고른다.</span>
+      <span class="k team">팀 →</span><span>목적·헌신·규칙·상호의존성이 다 있다.</span>
+    </div>
+    <p>카드를 옆으로 밀거나 아래 버튼을 눌러요. 겉보기랑 답이 다른 <b>함정 카드</b>도 섞여 있어요.</p>
+    <p class="muted">약 2분 · 장면은 모두 가상입니다.</p>`;
+  $("stage").append(c);
+  setControls([wideBtn("시작하기", next)]);
+  $("keys").textContent = "";
+}
+
+/* ---------- 카드 ---------- */
+function next() {
+  state.i++;
+  if (state.i >= CARDS.length) return finish();
+  state.phase = "swipe"; state.side = null;
+  renderProgress();
+  const stage = $("stage"); stage.innerHTML = "";
+  if (state.i + 1 < CARDS.length) stage.append(cardEl(CARDS[state.i + 1], state.i + 1, true));
+  const live = cardEl(CARDS[state.i], state.i, false);
+  stage.append(live);
+  bindDrag(live);
+  setControls([
+    btn("← 모임", "<small>조건이 빠졌다</small>", "", () => decide(false)),
+    btn("팀 →", "<small>네 조건이 다 있다</small>", "team", () => decide(true)),
+  ]);
+  $("keys").textContent = "키보드: ← 모임 · → 팀";
+}
+function cardEl(c, j, under) {
+  const n = el("div", "card" + (under ? " under" : " live"));
+  n.innerHTML = `
+    <div class="when"><span>${c.when}</span><span>${j + 1} / ${CARDS.length}</span></div>
+    <p class="scene">${c.scene}</p>
+    <div class="quote"><small>${c.quote.who}</small>${c.quote.text}</div>
+    <div class="ask">이 사람들은 팀일까?</div>
+    <span class="stamp left">모임</span><span class="stamp right">팀</span>`;
+  return n;
+}
+function bindDrag(card) {
+  let x0 = null, dx = 0;
+  const L = card.querySelector(".stamp.left"), Rt = card.querySelector(".stamp.right");
+  const paint = () => {
+    card.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`;
+    L.style.opacity = Math.min(1, Math.max(0, -dx / 110));
+    Rt.style.opacity = Math.min(1, Math.max(0, dx / 110));
+  };
+  card.addEventListener("pointerdown", (e) => { x0 = e.clientX; dx = 0; card.classList.remove("back"); card.setPointerCapture(e.pointerId); });
+  card.addEventListener("pointermove", (e) => { if (x0 === null) return; dx = e.clientX - x0; paint(); });
+  const end = () => {
+    if (x0 === null) return; x0 = null;
+    if (dx > 110) decide(true); else if (dx < -110) decide(false);
+    else { card.classList.add("back"); dx = 0; paint(); }
+  };
+  card.addEventListener("pointerup", end); card.addEventListener("pointercancel", end);
+}
+function flyOut(isTeam, then) {
+  const card = document.querySelector(".card.live");
+  if (!card || reduce) return then();
+  card.classList.add("fly");
+  card.style.transform = `translateX(${isTeam ? 520 : -520}px) rotate(${isTeam ? 18 : -18}deg)`;
+  card.style.opacity = "0";
+  setTimeout(then, 300);
+}
+function decide(isTeam) {
+  if (state.phase !== "swipe") return;
+  state.phase = "busy"; state.side = isTeam;
+  flyOut(isTeam, () => (isTeam ? reveal(null) : pick()));
+}
+
+/* ---------- 빠진 조건 고르기 ---------- */
+function pick() {
+  state.phase = "pick";
+  const stage = $("stage"); stage.innerHTML = "";
+  const p = el("div", "card panel");
+  p.innerHTML = `<h2>모임이라면, 무엇이 빠졌을까?</h2><p class="muted">${CARDS[state.i].when} · ${CARDS[state.i].quote.text}</p>`;
+  const g = el("div", "conds");
+  KEYS.forEach((k, n) => {
+    const c = CONDITIONS[k];
+    const b = el("button", null, `${c.name}<small>9주차 ${c.page}쪽 · 키 ${n + 1}</small>`);
+    b.type = "button"; b.style.setProperty("--c", c.color); b.onclick = () => reveal(k);
+    g.append(b);
+  });
+  p.append(g);
+  stage.append(p);
+  setControls([btn("되돌리기", "<small>모임/팀부터 다시 고를래요</small>", "plain", () => { state.i--; next(); })]);
+  $("keys").textContent = "키보드: 1 목적 · 2 헌신 · 3 규칙 · 4 상호의존성";
+}
+
+/* ---------- 풀이 ---------- */
+function reveal(chosen) {
+  state.phase = "reveal";
+  const c = CARDS[state.i];
+  let level;
+  if (c.team) level = state.side ? "good" : "bad";
+  else if (state.side) level = "bad";
+  else level = chosen === c.missing || (c.alsoOk || []).includes(chosen) ? "good" : "half";
+  state.results[state.i] = { level, chosen, side: state.side };
+  renderProgress();
+
+  const label = { good: "정답", half: "모임은 맞았어요", bad: "아쉬워요" }[level];
+  const color = { good: "var(--good)", half: "var(--half)", bad: "var(--bad)" }[level];
+  const ans = c.team
+    ? `정답: <b>팀</b>`
+    : `정답: <b>모임</b> · <span style="color:${CONDITIONS[c.missing].color}">${CONDITIONS[c.missing].name}</span>이 빠졌다 (${CONDITIONS[c.missing].page}쪽)`;
+  const yours = state.side ? "팀" : chosen ? `모임 · ${CONDITIONS[chosen].name}` : "모임";
+  const extra = !c.team && c.alsoOk && c.alsoOk.includes(chosen) ? `<p class="why">${c.alsoWhy}</p>` : "";
+
+  const stage = $("stage"); stage.innerHTML = "";
+  const p = el("div", "card panel scroll");
+  p.innerHTML = `
+    <div><span class="verdict" style="background:${color}">${label}</span>${c.trap ? ' <span class="tag">함정 카드</span>' : ""}</div>
+    <p class="answer">${ans}</p>
+    <p class="tag">내 답: ${yours}</p>
+    <p class="why">${c.why}</p>${extra}
+    ${c.tip ? `<div class="tip"><b>팀이 되려면</b> ${c.tip}</div>` : ""}`;
+  stage.append(p);
+  const last = state.i === CARDS.length - 1;
+  setControls([wideBtn(last ? "결과 보기" : "다음 카드", next)]);
+  $("keys").textContent = "키보드: Enter 다음";
+}
+
+/* ---------- 결과 ---------- */
+function finish() {
+  state.phase = "end"; renderProgress();
+  const R = state.results;
+  const good = R.filter((r) => r.level === "good").length;
+  const half = R.filter((r) => r.level === "half").length;
+  const teamCards = CARDS.map((c, j) => ({ c, r: R[j] }));
+  const per = KEYS.map((k) => {
+    const items = teamCards.filter(({ c }) => !c.team && c.missing === k);
+    const ok = items.filter(({ r }) => r.level === "good").length;
+    return { k, ok, n: items.length };
+  });
+  const teamOk = teamCards.filter(({ c, r }) => c.team && r.level === "good").length;
+  const teamN = CARDS.filter((c) => c.team).length;
+  const weakest = per.slice().sort((a, b) => a.ok / a.n - b.ok / b.n)[0];
+  const traps = teamCards.filter(({ c }) => c.trap);
+
+  const stage = $("stage"); stage.innerHTML = "";
+  const p = el("div", "card panel scroll");
+  p.innerHTML = `
+    <h2>결과</h2>
+    <div class="score"><div><b>${good}/${CARDS.length}</b>완전히 맞힘</div><div><b>${half}</b>모임만 맞힘</div><div><b>${teamOk}/${teamN}</b>팀 카드</div></div>
+    <h3 style="font-size:15px;margin:6px 0">조건별로 맞힌 카드</h3>
+    <div class="bycond">${per.map(({ k, ok, n }) => `<div class="row"><span>${CONDITIONS[k].name}</span><div class="bar"><i style="width:${(ok / n) * 100}%;background:${CONDITIONS[k].color}"></i></div><b>${ok}/${n}</b></div>`).join("")}</div>
+    ${weakest.ok < weakest.n ? `<p>가장 헷갈린 조건은 <b style="color:${CONDITIONS[weakest.k].color}">${CONDITIONS[weakest.k].name}</b>(${CONDITIONS[weakest.k].page}쪽)이에요.</p>` : `<p>네 조건을 모두 정확히 짚었어요.</p>`}
+    <h3 style="font-size:15px;margin:14px 0 4px">함정 카드</h3>
+    <ul class="traps">${traps.map(({ c, r }) => `<li>${r.level === "good" ? "✅" : r.level === "half" ? "🟠" : "❌"} <b>${c.when}</b> · ${c.team ? "팀" : `모임 (${CONDITIONS[c.missing].name})`}<br><span class="muted">${trapLine(c)}</span></li>`).join("")}</ul>
+    <p>모든 모임이 팀은 아니다. 팀은 단순히 지시를 따르는 사람들의 모임이 아니라, 개인의 이익을 넘어 함께 무언가를 이루는 집단이다. <span class="muted">(9주차 6쪽)</span></p>
+    <p class="muted">결과 화면을 캡처해서 조원들과 비교해 보세요.</p>
+    <div class="links"><a href="../game/index.html">조장 시뮬레이터 해 보기</a><a href="../debugger/index.html">팀 디버거 해 보기</a></div>`;
+  stage.append(p);
+  setControls([wideBtn("다시 하기", intro)]);
+  $("keys").textContent = "";
+}
+function trapLine(c) {
+  if (c.team && c.when === "결론 회의") return "갈등이 있어도, 정해 둔 방식으로 풀면 팀이다.";
+  if (c.when === "제출 전날") return "다들 성실하게 자기 몫을 해도, 이어지지 않으면 모임이다.";
+  if (c.when === "방향 정하기") return "방향이 있어도, 조장만 이유를 알면 지시를 따르는 모임이다.";
+  if (c.when === "마감 공지") return "규칙이 지켜져도, 위협으로 만든 분위기면 헌신이 무너진다.";
+  if (c.when === "성적 발표") return "결과물이 좋아도, 한 사람이 다 메웠다면 팀은 아니다.";
+  return "";
+}
+
+/* ---------- 버튼 ---------- */
+function btn(label, sub, cls, fn) { const b = el("button", "btn " + cls, label + (sub || "")); b.type = "button"; b.onclick = fn; return b; }
+function wideBtn(label, fn) { const b = btn(label, "", "wide", fn); return b; }
+function setControls(nodes) { const c = $("controls"); c.innerHTML = ""; nodes.forEach((n) => c.append(n)); if (nodes.length === 1) nodes[0].classList.add("wide"); }
+
+document.addEventListener("keydown", (e) => {
+  if (state.phase === "swipe") { if (e.key === "ArrowLeft") decide(false); if (e.key === "ArrowRight") decide(true); }
+  else if (state.phase === "pick" && ["1", "2", "3", "4"].includes(e.key)) reveal(KEYS[+e.key - 1]);
+  else if ((state.phase === "reveal" || state.phase === "intro") && e.key === "Enter") { e.preventDefault(); next(); }
+});
+
+// claude.ai 미리보기처럼 사이트 밖에서 열면 다른 페이지로 가는 링크를 숨긴다
+if (location.protocol !== "file:" && !location.hostname.endsWith("github.io")) {
+  document.querySelectorAll(".sitebar nav").forEach((a) => (a.style.display = "none"));
+  document.querySelector(".sitebar .brand").removeAttribute("href");
+}
+intro();
+</script>
+</body>
+</html>

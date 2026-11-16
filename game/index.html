@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3조의 열흘: 우리는 팀이 될 수 있을까?</title>
+<style>
+  :root {
+    --bg: #b9cbdc; --panel: #ffffff; --ink: #1f2933; --muted: #6b7785; --mine: #ffe14d; --line: #d7dee6;
+    --purpose: #3b82f6; --commitment: #ef6c4a; --rules: #8b5cf6; --interdependence: #10a37f;
+    --good: #16a34a; --bad: #dc2626; --mid: #d97706;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; color: var(--ink); background: #e9eef3; display: flex; justify-content: center; }
+  .phone { width: 100%; max-width: 440px; height: 100vh; height: 100dvh; display: flex; flex-direction: column; background: var(--bg); box-shadow: 0 0 0 1px var(--line); }
+
+  .top { background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 14px; }
+  .room { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .room h1 { font-size: 16px; margin: 0; }
+  .room .sub { font-size: 12px; color: var(--muted); }
+  .tools { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+  .tools button { font: inherit; font-size: 11px; padding: 3px 7px; border: 1px solid var(--line); background: #fff; border-radius: 999px; cursor: pointer; color: var(--muted); }
+  .tools button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .gauges { display: none; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+  .gauges.show { display: grid; }
+  .gauge .label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+  .gauge .label b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .gauge.focus .label span { color: var(--ink); font-weight: 700; }
+  .bar { height: 7px; background: #edf1f5; border-radius: 99px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
+  .delta { margin-left: 4px; font-size: 11px; font-weight: 700; font-style: normal; opacity: 0; transition: opacity .3s; }
+  .delta.show { opacity: 1; } .delta.up { color: var(--good); } .delta.down { color: var(--bad); }
+
+  .chat { flex: 1; overflow-y: auto; padding: 14px 12px 8px; }
+  .day { text-align: center; margin: 14px 0 10px; }
+  .day span { display: inline-block; font-size: 12px; background: rgba(0,0,0,.18); color: #fff; padding: 4px 12px; border-radius: 999px; }
+  .day .tag { display: inline-block; margin-left: 6px; font-size: 11px; color: #fff; padding: 2px 8px; border-radius: 999px; }
+  .sys { text-align: center; font-size: 12px; color: #4b5866; margin: 8px 16px; line-height: 1.5; animation: pop .25s ease; }
+  .msg { display: flex; gap: 8px; margin: 6px 0; align-items: flex-start; animation: pop .25s ease; }
+  .avatar { flex: 0 0 34px; height: 34px; border-radius: 12px; color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .msg .body { max-width: 78%; }
+  .msg .name { font-size: 12px; color: #3d4a57; margin: 0 0 3px 2px; }
+  .msg .name .dm { font-size: 10px; background: #334155; color: #fff; border-radius: 4px; padding: 1px 4px; margin-left: 4px; }
+  .bubble { background: #fff; padding: 8px 11px; border-radius: 4px 14px 14px 14px; font-size: 14px; line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere; }
+  .msg.mine { justify-content: flex-end; align-items: flex-end; }
+  .msg.mine .bubble { background: var(--mine); border-radius: 14px 4px 14px 14px; }
+  .unread { font-size: 11px; font-weight: 700; color: #d4a300; align-self: flex-end; margin-bottom: 2px; }
+  .typing .bubble { color: var(--muted); letter-spacing: 2px; }
+  .back { margin: 8px 6px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,.65); font-size: 12px; line-height: 1.5; border-left: 4px solid var(--muted); animation: pop .25s ease; }
+  .back b { font-weight: 700; }
+  @keyframes pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .choices { background: var(--panel); border-top: 1px solid var(--line); padding: 10px 12px 14px; min-height: 64px; max-height: 46vh; overflow-y: auto; }
+  .choices .hint { font-size: 12px; color: var(--muted); margin: 0 0 8px 2px; }
+  .choice { display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; line-height: 1.4; background: #f6f8fa; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 6px; cursor: pointer; color: var(--ink); }
+  .choice:hover, .choice:focus-visible { background: #fff7c2; border-color: #e6c800; outline: none; }
+  .primary { display: block; width: 100%; font: inherit; font-size: 15px; font-weight: 700; padding: 12px; border: 0; border-radius: 12px; background: var(--ink); color: #fff; cursor: pointer; }
+
+  .card { background: #fff; border-radius: 16px; padding: 18px 16px; margin: 10px 2px; line-height: 1.55; font-size: 14px; animation: pop .3s ease; }
+  .card h2 { font-size: 18px; margin: 0 0 8px; }
+  .card h3 { font-size: 14px; margin: 18px 0 6px; }
+  .card p { margin: 6px 0; }
+  .card ol, .card ul { margin: 6px 0; padding-left: 18px; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 700; color: #fff; padding: 3px 9px; border-radius: 999px; margin-bottom: 8px; }
+  .muted { color: var(--muted); font-size: 12px; }
+  .final-bars { display: grid; gap: 6px; margin: 8px 0; }
+  .final-bars .row { display: grid; grid-template-columns: 74px 1fr 30px; align-items: center; gap: 8px; font-size: 12px; }
+  .final-bars .row b { text-align: right; font-variant-numeric: tabular-nums; }
+  .plan { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 13px; margin: 8px 0; }
+  .plan .d { font-weight: 700; }
+
+  /* 발표 슬라이드 플레이어 */
+  .deck { background: #111827; border-radius: 12px; padding: 10px; margin: 8px 0; color: #e5e7eb; }
+  .filebar { font-family: ui-monospace, Menlo, monospace; font-size: 11px; margin-bottom: 8px; color: #cbd5e1; }
+  .filebar.bad { color: #fca5a5; }
+  .sv { position: relative; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden; background: #fff; color: #111827; }
+  .sv .hd { height: 16%; display: flex; align-items: center; padding: 0 10px; font-size: 13px; font-weight: 800; color: #fff; background: #1d4ed8; }
+  .sv .bd { padding: 8px 12px; font-size: 12px; line-height: 1.45; }
+  .sv .who { position: absolute; right: 8px; bottom: 5px; font-size: 9px; color: #6b7280; }
+  .sv.tpl-b { background: #14532d; color: #f0fdf4; font-family: "Times New Roman", Georgia, serif; }
+  .sv.tpl-b .hd { background: transparent; color: #fef08a; font-style: italic; font-weight: 400; font-size: 15px; border-bottom: 1px solid #86efac; }
+  .sv.tpl-b .who { color: #bbf7d0; }
+  .sv.cover { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(135deg,#1e3a8a,#2563eb); color: #fff; padding: 10px; }
+  .sv.cover .t { font-size: 17px; font-weight: 800; line-height: 1.3; }
+  .sv.cover .g { margin-top: 8px; font-size: 11px; background: rgba(255,255,255,.18); padding: 4px 8px; border-radius: 6px; }
+  .sv.cover .who { color: #c7d2fe; }
+  .sv.qa { background: #0b1220; color: #e5e7eb; }
+  .sv.qa .hd { background: #334155; }
+  .sv.qa .bd { font-size: 11.5px; }
+  .sv.qa .q { margin: 3px 0; }
+  .sv .big { font-size: 26px; font-weight: 800; color: #1d4ed8; margin: 6px 0 2px; }
+  .sv .src { font-size: 9px; color: #6b7280; margin: 2px 0; }
+  .sv.tpl-b .src { color: #bbf7d0; }
+  .sv ul { margin: 2px 0; padding-left: 16px; }
+  .sv .calc { font-size: 14px; margin: 10px 0 4px; }
+  .sv .calc b { font-size: 18px; color: #047857; }
+  .sv .ph { margin-top: 6px; height: 44%; border: 2px dashed #9ca3af; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 12px; }
+  .sv .bars2 { display: grid; gap: 4px; margin-top: 4px; }
+  .sv .bars2 div { display: grid; grid-template-columns: 96px 1fr 28px; gap: 6px; align-items: center; font-size: 10.5px; }
+  .sv .bars2 i { display: block; height: 9px; background: #f97316; border-radius: 3px; }
+  .sv .stamp { position: absolute; left: 50%; top: 58%; transform: translate(-50%,-50%) rotate(-8deg); border: 2px solid #9ca3af; color: #9ca3af; padding: 2px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; }
+  #slideView { border-radius: 8px; outline: 3px solid transparent; outline-offset: 2px; transition: outline-color .2s; }
+  #slideView.buggy { outline-color: #ef4444; }
+  .bugs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; min-height: 20px; }
+  .ribbon { font-size: 11px; font-weight: 700; color: #fff; padding: 3px 7px; border-radius: 4px; }
+  .ribbon.ok { background: var(--good); }
+  .speech { margin-top: 8px; font-size: 12.5px; line-height: 1.5; min-height: 38px; color: #f3f4f6; }
+  .speech b { color: #fde68a; }
+  .dctl { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .dctl button { font: inherit; font-size: 12px; background: #1f2937; color: #e5e7eb; border: 1px solid #374151; border-radius: 6px; padding: 4px 9px; cursor: pointer; }
+  .dctl .n { flex: 1; text-align: center; font-size: 11px; color: #9ca3af; }
+  .dthumbs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 6px; }
+  .dthumbs button { position: relative; font: inherit; font-size: 10px; padding: 6px 0; border-radius: 4px; border: 2px solid transparent; background: #1f2937; color: #cbd5e1; cursor: pointer; }
+  .dthumbs button[aria-current="true"] { border-color: #facc15; }
+  .dthumbs button.has-bug::after { content: ""; position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; border-radius: 50%; background: #ef4444; }
+
+  .fails { list-style: none; padding: 0 !important; }
+  .fails li { background: #f6f8fa; border-radius: 10px; padding: 8px 10px; margin: 6px 0; font-size: 13px; border-left: 4px solid var(--muted); }
+  .fails li.bad { border-left-color: var(--bad); }
+  .fails li.mid { border-left-color: var(--mid); }
+  .fails li.good { border-left-color: var(--good); }
+  .fails .cause { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .links { list-style: none; padding: 0 !important; }
+  .links li { background: #f6f8fa; border-radius: 10px; padding: 8px 10px; margin: 6px 0; font-size: 13px; }
+  .links .good { border-left: 4px solid var(--good); }
+  .links .bad { border-left: 4px solid var(--bad); }
+
+  /* ===== 데스크톱 데모 (GitHub Pages) ===== */
+  .layout { width: 100%; display: flex; justify-content: center; }
+  .side { display: none; }
+  .tools .home { font-size: 11px; padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); text-decoration: none; }
+  #slideView { position: relative; }
+  #slideView .sv { width: 360px; transform-origin: 0 0; }
+  .bigview { display: none; }
+  .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, .78); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 24px; }
+  .modal[hidden] { display: none; }
+  .mbox { width: min(980px, 100%); max-height: 100%; overflow-y: auto; }
+  .mbar { display: flex; justify-content: space-between; align-items: center; color: #e5e7eb; margin-bottom: 10px; font-size: 15px; }
+  .mbar button { font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 8px; border: 1px solid #475569; background: #1f2937; color: #fff; cursor: pointer; }
+  .modal .deck { padding: 16px; }
+  .modal .speech { font-size: 17px; min-height: 52px; }
+  .modal .ribbon { font-size: 14px; padding: 5px 10px; }
+  .modal .filebar { font-size: 13px; }
+  .modal .dctl button { font-size: 14px; padding: 7px 14px; }
+  .modal .dthumbs button { font-size: 13px; padding: 10px 0; }
+
+  @media (min-width: 1080px) {
+    body { background: #e7ebf5; }
+    .layout { display: grid; grid-template-columns: 250px 440px 300px; gap: 28px; justify-content: center; height: 100vh; height: 100dvh; padding: 22px 24px; }
+    .phone { height: 100%; border-radius: 30px; overflow: hidden; box-shadow: 0 0 0 9px #1b2a4a, 0 34px 60px -24px rgba(27, 42, 74, .55); }
+    .gauges, #gaugeToggle, .tools .home { display: none !important; }
+    .side { display: block; overflow-y: auto; padding: 4px 2px 24px; color: #1b2a4a; }
+    .bigview { display: block; width: 100%; font: inherit; font-size: 14px; font-weight: 700; padding: 10px; margin: 8px 0 0; border-radius: 10px; border: 1.5px solid #1b2a4a; background: #fff; cursor: pointer; }
+  }
+  .side .home { display: inline-block; font-size: 13px; color: #55627d; text-decoration: none; margin-bottom: 18px; }
+  .side .home:hover { color: #1b2a4a; }
+  .side h2 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.02em; }
+  .side .about { font-size: 13px; color: #55627d; margin: 0 0 20px; line-height: 1.5; word-break: keep-all; }
+  .side h3 { font-size: 14px; margin: 0 0 10px; }
+
+  .tl { list-style: none; margin: 0; padding: 0; position: relative; }
+  .tl::before { content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 2px; background: #cfd6e6; }
+  .tl li { position: relative; padding: 0 0 16px 26px; }
+  .tl .dot { position: absolute; left: 0; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #e7ebf5; border: 2px solid #cfd6e6; }
+  .tl li.done .dot { border-color: transparent; }
+  .tl li.now .dot { box-shadow: 0 0 0 4px rgba(255, 225, 77, .9); border-color: transparent; }
+  .tl .d { font-size: 13px; font-weight: 800; }
+  .tl .lab { font-size: 13px; color: #55627d; }
+  .tl .ct { font-size: 12px; font-weight: 700; }
+  .tl li.todo { opacity: .55; }
+  .tl .said { margin-top: 5px; font-size: 12.5px; line-height: 1.45; background: #fff; border: 1px solid #cfd6e6; border-radius: 4px 10px 10px 10px; padding: 6px 8px; word-break: keep-all; }
+  .tl .chips { margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; }
+  .tl .chip { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 999px; color: #fff; }
+
+  .pc { background: #fff; border: 1px solid #cfd6e6; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; transition: box-shadow .25s, transform .25s; }
+  .pc.focus { box-shadow: 0 0 0 3px var(--c); }
+  .pc .top2 { display: flex; justify-content: space-between; align-items: baseline; }
+  .pc .nm { font-size: 15px; font-weight: 800; }
+  .pc .pg { font-size: 12px; color: #55627d; margin-left: 6px; font-weight: 400; }
+  .pc .val { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .pc .today { display: inline-block; font-size: 11px; font-weight: 700; color: #1b2a4a; background: #ffe14d; border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 2px; }
+  .pc .pbar { position: relative; height: 10px; background: #edf1f5; border-radius: 99px; overflow: hidden; margin: 6px 0 8px; }
+  .pc .pfill { height: 100%; border-radius: 99px; background: var(--c); transition: width .6s ease; }
+  .pc .mark { position: absolute; top: 0; bottom: 0; width: 2px; background: #1b2a4a; opacity: .35; }
+  .pc p { margin: 0; font-size: 12.5px; color: #55627d; line-height: 1.45; word-break: keep-all; }
+  .pc .pd { font-size: 14px; font-weight: 800; margin-left: 6px; opacity: 0; transition: opacity .3s; }
+  .pc .pd.show { opacity: 1; }
+  .pc.bump { animation: bump .5s ease; }
+  @keyframes bump { 40% { transform: scale(1.03); } }
+  .legend2 { font-size: 12px; color: #55627d; line-height: 1.5; margin-top: 4px; }
+  @media (prefers-reduced-motion: reduce) { .pc.bump { animation: none; } * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="side" aria-label="열흘 타임라인">
+  <a class="home" href="../index.html">처음으로</a>
+  <h2>3조의 열흘</h2>
+  <p class="about">교양 수업 조별 발표 "일회용 컵, 우리 캠퍼스에서 줄일 수 있을까?"를 5명이 준비한다. 당신은 조장 민준.</p>
+  <h3>열흘의 흐름</h3>
+  <ol class="tl" id="timeline"></ol>
+</aside>
+<div class="phone">
+  <header class="top">
+    <div class="room">
+      <div>
+        <h1>3조 발표팀 (5)</h1>
+        <div class="sub" id="dayLabel">발표까지 D-10</div>
+      </div>
+      <div class="tools">
+        <a class="home" href="../index.html">처음으로</a>
+        <button type="button" id="gaugeToggle" aria-pressed="true" title="네 조건 게이지 보이기/숨기기">조건 보기</button>
+        <button type="button" data-speed="1.6">느리게</button>
+        <button type="button" data-speed="1" aria-pressed="true">보통</button>
+        <button type="button" data-speed="0.35">빠르게</button>
+      </div>
+    </div>
+    <div class="gauges show" id="gauges"></div>
+  </header>
+  <main class="chat" id="chat" aria-live="polite"></main>
+  <footer class="choices" id="choices"></footer>
+</div>
+<aside class="side" aria-label="팀의 네 조건">
+  <h3 style="margin-top:42px">팀의 네 조건</h3>
+  <div id="panel"></div>
+  <p class="legend2">세로선(55) 아래로 내려가면 그 조건이 맡은 슬라이드가 망가진다. 넷 다 60 이상이면 팀 엔딩.</p>
+</aside>
+</div>
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="3조의 발표 큰 화면">
+  <div class="mbox"><div class="mbar"><span>3조의 발표</span><button type="button" id="modalClose">닫기</button></div><div id="mslot"></div></div>
+</div>
+
+<script>
+/* =========================================================
+   1. 기본 데이터  (근거: 9주차 Building a Team 6–10쪽)
+   시나리오: 교양 수업 5인 조별 발표
+   "일회용 컵, 우리 캠퍼스에서 줄일 수 있을까?" (15분, 슬라이드 6장)
+   날마다 조건 하나가 시험대에 오르고, D-2·D-1에 그 선택이 돌아온다.
+   ========================================================= */
+const CONDITIONS = {
+  purpose:         { name: "공동 목적",   short: "목적", page: 7,  color: "var(--purpose)" },
+  commitment:      { name: "헌신",       short: "헌신", page: 8,  color: "var(--commitment)" },
+  rules:           { name: "운영 규칙",   short: "규칙", page: 9,  color: "var(--rules)" },
+  interdependence: { name: "상호의존성", short: "연결", page: 10, color: "var(--interdependence)" },
+};
+const START = 50;
+const TEAM_LINE = 60;     // 네 조건이 모두 이 이상이면 '팀' 엔딩
+const WEAK_LINE = 55;     // 이 미만인 조건은 발표 슬라이드에서 망가진 모습으로 보임
+const FATIGUE_LIMIT = 2;  // 민준이 혼자 떠안은 일이 이 이상이면 D-1에 몸살
+
+const MEMBERS = {
+  me:    { name: "민준(나)", color: "#334155" },  // 조장 · 1, 6번 슬라이드
+  jiho:  { name: "지호",     color: "#2563eb" },  // 2번 현황
+  doyun: { name: "도윤",     color: "#0891b2" },  // 3번 다른 대학 사례
+  haeun: { name: "하은",     color: "#db2777" },  // 4번 설문
+  rin:   { name: "린",       color: "#7c3aed" },  // 5번 제안 효과 (교환학생)
+};
+
+/* =========================================================
+   2. 사건
+   - focus: 그날 시험대에 오르는 조건 (null이면 '돌아오는 날')
+   - intro(s), choices(s)는 지금까지의 상태 s를 보고 바뀐다.
+   - run(s)는 게이지(fx), 플래그(flag), 피로(tire)를 바꾸고 반응 대사를 돌려준다.
+   - 대사 형식: { from, text, dm?: true } | { sys } | { back, cond }  (back = 이전 선택이 돌아온 장면)
+   ========================================================= */
+const EVENTS = [
+  {
+    id: "kickoff", day: "D-10", title: "첫 회의", focus: "purpose",
+    intro: () => [
+      { from: "jiho",  text: "주제 '일회용 컵 줄이기' 확정! 근데 발표 방향은 어떻게 감?" },
+      { from: "jiho",  text: "난 현황 데이터 깔끔하게 보여 주는 정보 전달형이 좋을 듯" },
+      { from: "haeun", text: "학생들 목소리가 중요하지 않아? 설문 위주로 가자" },
+      { from: "doyun", text: "교수님은 해결책 좋아하시던데. 제안 위주로 ㄱ" },
+      { from: "rin",   text: "저는… 아무거나 좋아요 ㅎㅎ" },
+    ],
+    choices: () => [
+      {
+        text: "다 좋은 의견이네! 일단 각자 맡은 파트 조사해 오자. 합치면서 맞추면 돼",
+        run: (s) => { fx(s, { purpose: -20 }); flag(s, "noPurpose"); return [
+          { from: "doyun", text: "ㅇㅋ" }, { from: "haeun", text: "그럼 난 설문 쪽으로 할게~" }, { from: "jiho", text: "난 데이터 위주로 ㄱㄱ" }]; },
+      },
+      {
+        text: "시간 없으니까 내가 정할게. 제안형으로 가자",
+        run: (s) => { fx(s, { purpose: 5 }); flag(s, "leaderDecided"); return [
+          { from: "doyun", text: "오 ㄱㄱ" }, { from: "jiho", text: "…ㅇㅋ. 근데 누구한테 뭘 제안하는 건데?" }]; },
+      },
+      {
+        text: "목요일에 10분만 보자. '발표 끝나고 누가 뭘 하게 되면 성공인지' 그 한 문장만 같이 정하자",
+        run: (s) => { fx(s, { purpose: 20 }); flag(s, "purposeSentence"); return [
+          { sys: "목요일, 5명이 10분 동안 모였다." },
+          { from: "haeun", text: "'학생회가 텀블러 할인을 해 보고 싶게 만들기'… 어때?" },
+          { from: "doyun", text: "오 그럼 내 사례도 할인 제도 위주로 찾을게" },
+          { from: "jiho",  text: "1번 슬라이드 맨 위에 박아 둘게" }]; },
+      },
+    ],
+  },
+  {
+    id: "files", day: "D-8", title: "초안 마감", focus: "rules",
+    intro: (s) => [
+      ...(s.flags.purposeSentence ? [{ from: "jiho", text: "목적 문장 1번 슬라이드에 넣어 뒀어~" }] : []),
+      { from: "haeun", text: "오늘 슬라이드 초안 마감 맞지??" },
+      { from: "rin",   text: "아 저는 일요일까지인 줄 알았어요" },
+      { from: "doyun", text: "템플릿 뭐 씀? 난 내 거 그냥 씀" },
+      { from: "jiho",  text: "파일 다 '최종'이라 뭐가 뭔지 모르겠다 ㅋㅋㅋ" },
+    ],
+    choices: () => [
+      {
+        text: "괜찮아 어디든 올려 줘, 내가 나중에 합칠게",
+        run: (s) => { fx(s, { rules: -20 }); tire(s, "files"); return [
+          { from: "haeun", text: "헐 고마워 민준아" }, { from: "doyun", text: "ㄱㅅ" }]; },
+      },
+      {
+        text: "공지 고정할게. 마감 금 18시 / 드라이브 '3조' 폴더 / 템플릿은 이 파일 하나 / 파일명 이름_슬라이드번호. 확인하면 👍",
+        run: (s) => { fx(s, { rules: 20 }); flag(s, "rulesSet"); return [
+          { from: "rin", text: "👍 일요일 아니었군요!" }, { from: "doyun", text: "귀찮지만 ㅇㅋ 👍 템플릿 바꿀게" }, { from: "jiho", text: "👍" }]; },
+      },
+      {
+        text: "템플릿만 내가 하나 만들어서 줄게. 나머지는 알아서!",
+        run: (s) => { fx(s, { rules: 5 }); flag(s, "templateOnly"); return [
+          { from: "doyun", text: "ㅇㅋ" }, { from: "rin", text: "근데 마감은 언제예요…?" }]; },
+      },
+    ],
+  },
+  {
+    id: "check", day: "D-6", title: "중간 점검", focus: "commitment",
+    intro: () => [
+      { from: "jiho",  text: "중간 점검~ 다들 어디까지 했어?" },
+      { from: "doyun", text: "사례 3개 찾음" },
+      { from: "haeun", text: "설문은… 아직 응답이 6명이에요 ㅠ" },
+      { from: "jiho",  text: "6명? 이 정도면 무임승차 아님? ㅋㅋ" },
+      { sys: "하은 님이 입력하다가 멈췄습니다." },
+    ],
+    choices: () => [
+      {
+        text: "ㅋㅋ 하은 분발하자~ 다들 파이팅!",
+        run: (s) => { fx(s, { commitment: -15 }); flag(s, "laughed"); return [
+          { from: "haeun", text: "네… 더 모아볼게요" }]; },
+      },
+      {
+        text: "다들 긴장하자. 다음 주까지 안 되면 기여도 평가에 반영할게",
+        run: (s) => { fx(s, { commitment: -20 }); flag(s, "threat"); return [
+          { from: "haeun", text: "죄송합니다…" }, { sys: "린 님이 메시지를 읽었습니다." }]; },
+      },
+      {
+        text: "(하은에게 개인톡) 어디서 막혔어? 설문 링크 우리 다 같이 돌려 보자",
+        run: (s) => { fx(s, { commitment: 20 }); flag(s, "helped"); return [
+          { from: "haeun", text: "사실 링크 돌릴 데가 없어서 막혔어요 ㅠ 고마워요", dm: true },
+          { from: "me",    text: "(단톡) 하은 설문 링크 각자 과톡에 한 번씩만 돌려 줘!" },
+          { from: "jiho",  text: "아까 말 심했다 미안 ㅋㅋ 나도 돌릴게" }]; },
+      },
+    ],
+  },
+  {
+    id: "numbers", day: "D-4", title: "숫자가 다르다", focus: "interdependence",
+    intro: (s) => [
+      { from: "jiho",  text: "전에 800개라고 했던 거, 캠퍼스 전체로 다시 세니까 하루 3,000개야. 업데이트함!" },
+      { from: "doyun", text: "어 근데 린 절감 효과 슬라이드는 아직 800개 기준인데?" },
+      { from: "doyun", text: "뭐 각자 파트니까 내가 건드릴 건 아니지 ㅋㅋ" },
+      ...(s.flags.threat || s.flags.laughed
+        ? [{ sys: "린 님이 메시지를 읽었습니다." }]
+        : [{ from: "rin", text: "앗 저 800개로 계산했어요. 어떻게 할까요?" }]),
+    ],
+    choices: () => [
+      {
+        text: "각자 파트는 각자 책임지자. 린이 알아서 고치겠지",
+        run: (s) => { fx(s, { interdependence: -20 }); flag(s, "eachOwn"); return [
+          { from: "doyun", text: "ㅇㅋ" }]; },
+      },
+      {
+        text: "숫자 바꾼 사람이 그 숫자 쓰는 사람한테 바로 말하기로 하자. 내일 밤엔 슬라이드 처음부터 끝까지 같이 넘겨 보자",
+        run: (s) => { fx(s, { interdependence: 20 }); flag(s, "midCheck"); return [
+          { from: "jiho",  text: "아 내가 린한테 먼저 말했어야 했네. 미안!" },
+          { sys: "다음 날 밤, 5명이 슬라이드를 같이 넘겨 봤다." },
+          { from: "doyun", text: "내 사례 슬라이드랑 하은 설문 내용 좀 겹치네. 내가 줄일게" }]; },
+      },
+      {
+        text: "숫자는 내가 다 맞춰 둘게, 신경 쓰지 마",
+        run: (s) => { fx(s, { interdependence: -5 }); tire(s, "numbers"); flag(s, "leaderFixed"); return [
+          { from: "rin", text: "아… 네 감사합니다" }, { from: "jiho", text: "민준 혼자 너무 하는 거 아님?" }]; },
+      },
+    ],
+  },
+  {
+    id: "merge", day: "D-2", title: "합쳐 보는 날", focus: null,
+    // 앞의 네 선택이 하나씩 돌아온다
+    intro: (s) => [
+      { sys: "슬라이드를 처음으로 한 파일에 합쳤다." },
+      s.flags.noPurpose
+        ? { back: "D-10", cond: "purpose", from: "jiho", text: "합쳐 보니까 내 건 정보 전달, 하은 건 설문, 도윤 건 제안이네 ㅋㅋ 결론 뭐로 해?" }
+        : s.flags.purposeSentence
+          ? { back: "D-10", cond: "purpose", from: "doyun", text: "목적 문장 보고 만드니까 내 사례도 할인 얘기로 바로 이어지네" }
+          : { back: "D-10", cond: "purpose", from: "jiho", text: "제안형인 건 알겠는데, 학생회한테 하는 거야 학교한테 하는 거야?" },
+      s.flags.rulesSet
+        ? { back: "D-8", cond: "rules", from: "doyun", text: "폴더에 파일 5개, 템플릿 하나라 합치는 데 10분 걸림 ㅋㅋ" }
+        : s.flags.templateOnly
+          ? { back: "D-8", cond: "rules", from: "doyun", text: "템플릿은 다 같은데, 린 건 아직 안 올라왔네?" }
+          : { back: "D-8", cond: "rules", from: "doyun", text: "템플릿 두 개 섞여 있음 ㅋㅋ 그래프도 수정 전 버전 들어간 듯" },
+      ...(s.flags.helped
+        ? [{ back: "D-6", cond: "commitment", from: "haeun", text: "설문 응답 48명 모였어요!! 그래프 넣었어요" }]
+        : [{ back: "D-6", cond: "commitment", sys: "하은 님이 새벽 2시에 파일을 올렸습니다: 하은_설문.pptx" },
+           { from: "haeun", text: "응답은 6명 그대로예요. 그래프는 시간이 없어서…" }]),
+      s.flags.midCheck
+        ? { back: "D-4", cond: "interdependence", from: "rin", text: "2번이랑 5번 숫자 3,000개로 맞췄어요!" }
+        : s.flags.leaderFixed
+          ? { back: "D-4", cond: "interdependence", from: "rin", text: "민준이 숫자 고쳐 준 거 봤어요. 근데 왜 900개인지 설명은 제가 잘 못 하겠어요…" }
+          : { back: "D-4", cond: "interdependence", from: "rin", text: "…저 아직 800개로 되어 있어요. 어느 숫자로 바꿔야 하는지 몰라서요" },
+    ],
+    choices: () => [
+      {
+        text: "각자 자기 파트만 연습해 오자",
+        run: (s) => { fx(s, { interdependence: -10 }); return [
+          { from: "doyun", text: "ㅇㅋ" }]; },
+      },
+      {
+        text: "내일 통으로 한 번 리허설하자. 앞사람 마지막 문장이 다음 사람 첫 문장으로 이어지게",
+        run: (s) => { fx(s, { interdependence: 10 }); flag(s, "rehearsed"); return [
+          { from: "haeun", text: "오 그럼 내 첫 문장은 '그럼 학생들은 왜 텀블러를 안 쓸까요?'로 할게" },
+          { from: "rin",   text: "저는 하은 설문 결과 받아서 시작할게요!" }]; },
+      },
+      {
+        text: "리허설은 생략하고, 남은 건 내가 밤새 손볼게",
+        run: (s) => { fx(s, { interdependence: -5 }); tire(s, "rehearsal"); return [
+          { from: "haeun", text: "진짜 괜찮아…?" }]; },
+      },
+    ],
+  },
+  {
+    id: "final", day: "D-1", title: "발표 전날",
+    // 민준이 혼자 떠안은 일이 많으면 '몸살'(운영 규칙 시험), 아니면 '결론 충돌'(공동 목적 시험)
+    variant: (s) => (s.tired.length >= FATIGUE_LIMIT ? "sick" : "clash"),
+    intro: (s) => {
+      if (variantOf(s) === "sick") return [
+        { sys: `민준은 혼자 떠안은 일(${s.tired.length}개) 때문에 며칠째 밤을 새우다 몸살이 났다.` },
+        { from: "me", text: "얘들아 나 열나서 오늘 마무리랑 내일 발표 진행이 힘들 것 같아 ㅠ" },
+        ...(s.flags.rulesSet
+          ? [{ from: "jiho", text: "괜찮아! 공지에 파일 위치랑 발표 순서 다 있으니까 내가 볼 수 있어" }]
+          : [{ from: "doyun", text: "헐 그럼 최신 파일 어디 있어?" }, { from: "haeun", text: "결론 슬라이드는 누가 써…?" }]),
+      ];
+      return [
+        { from: "haeun", text: "결론은 '텀블러 굿즈 공모전 열자'로 가자! 재밌잖아" },
+        { from: "doyun", text: "난 다른 대학 사례 정리표로 끝내는 게 나은데" },
+        { from: "jiho",  text: "이걸로 한 시간째임…" },
+      ];
+    },
+    choices: (s) => {
+      if (variantOf(s) === "sick") return [
+        {
+          text: "괜찮아… 노트북으로 내가 마무리할게",
+          run: (s) => { fx(s, { rules: -5 }); flag(s, "soloFinish"); return [
+            { from: "haeun", text: "진짜 괜찮아…?" }, { sys: "민준은 새벽 4시에 혼자 파일을 합쳤다." }]; },
+        },
+        {
+          text: "지호가 오늘 진행 좀 맡아 줄래? 필요한 건 공지에 다 있어",
+          run: (s) => {
+            if (s.flags.rulesSet) { fx(s, { rules: 10 }); flag(s, "handedOver"); return [
+              { from: "jiho", text: "ㅇㅋ 공지 보고 체크리스트 돌릴게. 푹 쉬어" }, { from: "rin", text: "제 슬라이드 폴더에 올렸어요!" }]; }
+            fx(s, { rules: -10 }); flag(s, "handoverFailed"); return [
+              { from: "jiho", text: "공지…? 어디 있는 거 말하는 거야?" }, { from: "doyun", text: "파일 어디 있는지부터 알려 줘 ㅠ" }];
+          },
+        },
+        {
+          text: "각자 할 수 있는 거 하고, 내일 아침에 다시 보자",
+          run: (s) => { fx(s, { rules: -5 }); return [
+            { from: "doyun", text: "ㅇㅋ 일단 내 건 해 둘게" }, { from: "haeun", text: "결론은… 내가 임시로 굿즈 공모전 넣어 둘게" }]; },
+        },
+      ];
+      return [
+        {
+          text: "시간 없으니까 이번엔 내가 정할게. 굿즈 공모전으로 가자",
+          run: (s) => { fx(s, { purpose: -20 }); flag(s, "goods"); return [
+            { from: "haeun", text: "오예" }, { from: "doyun", text: "…ㅇㅋ" }]; },
+        },
+        s.flags.purposeSentence
+          ? {
+              text: "1번 슬라이드 목적 문장 다시 보자. 학생회가 할인을 해 보고 싶게 만드는 결론은 뭐야?",
+              run: (s) => { fx(s, { purpose: 10 }); flag(s, "usedPurpose"); return [
+                { from: "haeun", text: "아… 그럼 굿즈보다 할인 제안이 결론이어야겠다" },
+                { from: "doyun", text: "정리표 마지막 줄에 '제안: 텀블러 300원 할인' 크게 넣자" }]; },
+            }
+          : s.flags.leaderDecided
+            ? {
+                text: "처음에 제안형으로 가기로 했잖아. 할인 제안이 보이는 쪽으로 하자",
+                run: (s) => { fx(s, { purpose: 5 }); return [
+                  { from: "jiho", text: "근데 왜 제안형인지는 아직도 잘 모르겠어 ㅋㅋ 일단 ㅇㅋ" }]; },
+              }
+            : {
+                text: "잠깐, 우리 처음에 뭘 목표로 하기로 했었지?",
+                run: (s) => { fx(s, { purpose: -10 }); flag(s, "noPurposeAsked"); return [
+                  { from: "jiho", text: "…그런 거 정한 적 없지 않나?" }, { from: "doyun", text: "ㅋㅋㅋ 없었던 듯" },
+                  { from: "me", text: "그냥 하은 말대로 굿즈 공모전으로 하자. 내가 합칠게" }]; },
+              },
+        {
+          text: "그냥 투표하자. 많은 쪽으로!",
+          run: (s) => { fx(s, { purpose: 0 }); flag(s, "voted"); return [
+            { sys: "3 : 2로 정리표가 이겼다." }, { from: "haeun", text: "…ㅇㅋ" }]; },
+        },
+      ];
+    },
+  },
+];
+
+/* =========================================================
+   3. 결과: 엔딩, 발표 슬라이드, 실패 지점
+   ========================================================= */
+const ENDINGS = {
+  purpose: {
+    title: "다섯 개의 발표를 이어 붙인 발표",
+    scene: "슬라이드마다 다른 질문에 답한다. 질의응답에서 교수님이 물었다. \"그래서 이 발표, 누구한테 뭘 하자는 거예요?\"",
+    lecture: "팀은 존재하는 이유가 필요하다. 구성원이 \"우리는 왜 여기 있나?\"에 답할 수 있어야 한다. 리더는 팀의 비전을 전달하고, 구성원이 각자의 비전을 세우도록 돕는다. (9주차 7쪽)",
+  },
+  commitment: {
+    title: "비어 있는 4번 슬라이드",
+    scene: "설문 슬라이드는 응답 6명에 그래프가 없다. 하은은 질문에 짧게만 답했다. 막혔다는 말을 끝내 꺼내지 못했다.",
+    lecture: "헌신은 동기부여와 연결된다. 구성원은 두려움이나 위협 속에서가 아니라, 동기부여된 분위기 속에서 해야 할 일을 기꺼이 맡는다. (9주차 8쪽)",
+  },
+  rules: {
+    title: "3조_최종_진짜(2).pptx",
+    scene: "템플릿 두 개, 글씨체 두 개, 수정 전 그래프. 발표 3분 전까지 어느 파일이 최신인지 찾았다.",
+    lecture: "함께 일하는 방식이 예측 가능해야 한다. 정해진 매뉴얼은 없고 팀 안에서 만들어지며, 위에서 내리는 지시에만 기대지 않게 해 주는 틀이 필요하다. (9주차 9쪽)",
+  },
+  interdependence: {
+    title: "앞뒤가 안 맞는 숫자",
+    scene: "2번 슬라이드는 하루 3,000개, 5번 슬라이드는 800개 기준. 모두 자기 파트는 완성했지만 서로의 파트를 확인하지 않았다.",
+    lecture: "팀에서는 팀 전체가 함께 성공하거나 실패하고, 혼자 이기는 팀원은 없다. 자기 일뿐 아니라 동료가 어떻게 하고 있는지도 살펴야 한다. (9주차 10쪽)",
+  },
+  team: {
+    title: "삐걱거렸지만, 하나의 발표",
+    scene: "몇 번 부딪혔지만 5명이 같은 목적을 보고, 정한 방식대로, 서로의 파트를 이어서 하나의 발표를 했다.",
+    lecture: "모든 모임이 팀은 아니다. 팀은 단순히 지시를 따르는 사람들의 모임이 아니라, 개인의 이익을 넘어 함께 무언가를 이루는 집단이다. (9주차 6쪽)",
+  },
+};
+
+// 조건마다 발표에서 드러나는 자리
+const SPOTS = {
+  purpose:         { where: "1·6번 슬라이드", bad: "6번 결론이 1번 슬라이드의 질문(어떻게 줄일까?)에 답하지 않는다", good: "1번의 목표 문장과 6번의 결론이 이어진다" },
+  commitment:      { where: "4번 슬라이드",   bad: "설문 응답 6명, 그래프 없음",                          good: "설문 응답 48명, 그래프 완성" },
+  rules:           { where: "3·5번 슬라이드", bad: "3번만 다른 템플릿·글씨체, 5번에 수정 전 그래프",        good: "템플릿 하나, 최신 파일 하나" },
+  interdependence: { where: "5번 슬라이드", bad: () => state.flags.leaderFixed ? "숫자는 조장이 대신 맞췄지만, 린은 자기 슬라이드의 계산을 설명하지 못한다" : "앞의 2번은 하루 3,000개인데 5번은 800개 기준으로 계산했다", good: "2번의 3,000개를 5번도 그대로 이어받아 계산했다" },
+};
+
+// 서로 다른 조건이 이어진 장면. when(s)가 참이면 결과에 보여 준다.
+const LINKS = [
+  { when: (s) => (s.flags.threat || s.flags.laughed), good: false,
+    text: "D-6 하은이 놀림·압박을 받는 걸 본 뒤, D-4 린도 숫자가 다른 걸 알면서 묻지 못했다", conds: ["commitment", "interdependence"] },
+  { when: (s) => s.flags.helped, good: true,
+    text: "D-6 막힌 하은을 도운 뒤, D-4 린도 먼저 \"어떻게 할까요?\"라고 물었다", conds: ["commitment", "interdependence"] },
+  { when: (s) => s.flags.purposeSentence && s.flags.usedPurpose, good: true,
+    text: "D-10 함께 정한 목적 문장으로 D-1 결론 다툼을 바로 정리했다", conds: ["purpose"] },
+  { when: (s) => s.flags.noPurposeAsked, good: false,
+    text: "D-10 목적을 정하지 않아서 D-1 \"처음에 뭘 목표로 했지?\"에 아무도 답하지 못했다", conds: ["purpose"] },
+  { when: (s) => s.flags.leaderDecided, good: false,
+    text: "D-10 방향은 조장 혼자 정해서, D-2까지 지호는 \"누구한테 제안하는 거야?\"를 물었다", conds: ["purpose"] },
+  { when: (s) => s.flags.handedOver, good: true,
+    text: "D-8 공지를 고정해 둬서, D-1 조장이 아파도 지호가 진행을 넘겨받았다", conds: ["rules"] },
+  { when: (s) => s.flags.handoverFailed, good: false,
+    text: "D-8 '내가 합칠게'로 넘어가서, D-1 진행을 넘기려 해도 아무도 파일 위치를 몰랐다", conds: ["rules"] },
+  { when: (s) => s.tired.length >= FATIGUE_LIMIT, good: false,
+    text: () => `혼자 떠안은 일 ${state.tired.length}개(${state.tired.map((t) => TIRED_LABEL[t]).join(", ")}) → D-1 조장이 몸살로 쓰러졌다`, conds: ["rules"] },
+  { when: (s) => s.flags.rehearsed && s.flags.midCheck, good: true,
+    text: "D-4 숫자를 같이 맞추고 D-2 이어지는 리허설까지 해서, 파트가 서로 넘겨받으며 이어졌다", conds: ["interdependence"] },
+];
+const TIRED_LABEL = { files: "D-8 파일 대신 합치기", numbers: "D-4 숫자 대신 맞추기", rehearsal: "D-2 남은 일 대신 손보기" };
+
+/* =========================================================
+   4. 상태와 도우미
+   ========================================================= */
+const KEYS = Object.keys(CONDITIONS);
+const state = { scores: {}, flags: {}, tired: [], i: 0, history: [], speed: 1, busy: false, started: false, finished: false };
+
+function fx(s, effects) {
+  for (const [k, d] of Object.entries(effects)) s.scores[k] = Math.max(0, Math.min(100, s.scores[k] + d));
+}
+function flag(s, name) { s.flags[name] = true; }
+function tire(s, what) { s.tired.push(what); }
+function variantOf(s) { return EVENTS[EVENTS.length - 1].variant(s); }
+function focusOf(ev, s) { return ev.id === "final" ? (variantOf(s) === "sick" ? "rules" : "purpose") : ev.focus; }
+
+const $chat = document.getElementById("chat");
+const $choices = document.getElementById("choices");
+const $gauges = document.getElementById("gauges");
+const $day = document.getElementById("dayLabel");
+const wait = (ms) => new Promise((r) => setTimeout(r, ms * state.speed));
+const down = () => { $chat.scrollTop = $chat.scrollHeight; };
+function el(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+const clean = (t) => t.replace(/^\(.*?\)\s*/, "");
+const short = (t, n = 34) => { t = clean(t); return t.length > n ? t.slice(0, n) + "…" : t; };
+
+// 헌신이 낮을수록 내 메시지를 늦게 읽는 사람이 많아진다
+function unreadCount() { return Math.max(0, Math.min(4, Math.round((70 - state.scores.commitment) / 12))); }
+
+/* =========================================================
+   4-1. 데스크톱 옆 패널: 네 조건 카드, 열흘 타임라인
+   ========================================================= */
+const PANEL_TEXT = {
+  purpose: "우리는 왜 여기 있나? 발표가 끝나면 누가 뭘 하게 되면 성공인가.",
+  commitment: "두려움이 아니라 동기부여된 분위기에서 기꺼이 맡는가.",
+  rules: "마감, 파일, 양식처럼 함께 일하는 방식이 예측 가능한가.",
+  interdependence: "내 파트만이 아니라 동료의 파트와 이어지는가.",
+};
+const TL = [
+  { day: "D-10", lab: "첫 회의", cond: "purpose" },
+  { day: "D-8", lab: "초안 마감", cond: "rules" },
+  { day: "D-6", lab: "중간 점검", cond: "commitment" },
+  { day: "D-4", lab: "숫자가 다르다", cond: "interdependence" },
+  { day: "D-2", lab: "합쳐 보는 날", cond: null },
+  { day: "D-1", lab: "발표 전날", cond: "final" },
+  { day: "D-day", lab: "발표", cond: "end" },
+];
+function renderPanel(focus) {
+  const box = document.getElementById("panel"); if (!box) return;
+  box.innerHTML = KEYS.map((k) => {
+    const c = CONDITIONS[k];
+    return `<div class="pc${k === focus ? " focus" : ""}" id="pc-${k}" style="--c:${c.color}">
+      <div class="top2"><span class="nm">${c.name}<span class="pg">${c.page}쪽</span>${k === focus ? '<span class="today">오늘 시험</span>' : ""}</span>
+        <span><span class="val" id="pv-${k}">${state.scores[k]}</span><span class="pd" id="pd-${k}"></span></span></div>
+      <div class="pbar"><div class="pfill" id="pf-${k}" style="width:${state.scores[k]}%"></div><span class="mark" style="left:${WEAK_LINE}%"></span></div>
+      <p>${PANEL_TEXT[k]}</p></div>`;
+  }).join("");
+}
+function updatePanel(effects) {
+  for (const k of KEYS) {
+    const v = document.getElementById(`pv-${k}`); if (!v) return;
+    v.textContent = state.scores[k];
+    document.getElementById(`pf-${k}`).style.width = state.scores[k] + "%";
+  }
+  for (const [k, d] of Object.entries(effects || {})) {
+    const pd = document.getElementById(`pd-${k}`); const pc = document.getElementById(`pc-${k}`);
+    pd.textContent = (d > 0 ? "+" : "") + d; pd.style.color = d > 0 ? "var(--good)" : "var(--bad)"; pd.classList.add("show");
+    pc.classList.remove("bump"); void pc.offsetWidth; pc.classList.add("bump");
+    setTimeout(() => pd.classList.remove("show"), 1800);
+  }
+}
+function renderTimeline() {
+  const ol = document.getElementById("timeline"); if (!ol) return;
+  const now = state.finished ? TL.length - 1 : (state.started ? state.history.length : -1);
+  ol.innerHTML = TL.map((t, i) => {
+    let ck = t.cond;
+    if (ck === "final") ck = state.started && state.history.length >= 5 ? focusOf(EVENTS[5], state) : null;
+    if (ck === "end") ck = null;
+    const color = ck ? CONDITIONS[ck].color : "#475569";
+    const h = state.history[i];
+    const cls = h || (state.finished && i === TL.length - 1) ? "done" : i === now ? "now" : "todo";
+    const tag = ck ? `<span class="ct" style="color:${color}">${CONDITIONS[ck].name}</span>` : t.cond === null ? `<span class="ct" style="color:#475569">선택이 돌아온다</span>` : "";
+    const chips = h ? Object.entries(h.diff).filter(([, d]) => d !== 0)
+      .map(([k, d]) => `<span class="chip" style="background:${CONDITIONS[k].color}">${CONDITIONS[k].short} ${d > 0 ? "+" : ""}${d}</span>`).join("") : "";
+    return `<li class="${cls}"><span class="dot" style="${cls !== "todo" ? `background:${color}` : ""}"></span>
+      <div class="d">${t.day} <span class="lab">${t.lab}</span></div>${tag}
+      ${h ? `<div class="said">${short(h.text, 46)}</div><div class="chips">${chips}</div>` : ""}</li>`;
+  }).join("");
+  const cur = ol.querySelector("li.now"); if (cur) cur.scrollIntoView({ block: "nearest" });
+}
+
+/* =========================================================
+   5. 채팅 화면
+   ========================================================= */
+function renderGauges(focus) {
+  $gauges.innerHTML = "";
+  for (const k of KEYS) {
+    const c = CONDITIONS[k];
+    const g = el("div", "gauge" + (k === focus ? " focus" : ""));
+    const label = el("div", "label");
+    const name = el("span", null, c.short);
+    const delta = el("em", "delta"); delta.id = `delta-${k}`; name.append(delta);
+    const val = el("b", null, String(state.scores[k])); val.id = `val-${k}`;
+    label.append(name, val);
+    const bar = el("div", "bar"); const fill = el("div", "fill");
+    fill.id = `fill-${k}`; fill.style.background = c.color; fill.style.width = state.scores[k] + "%";
+    bar.append(fill); g.append(label, bar); $gauges.append(g);
+  }
+  renderPanel(focus);
+}
+function updateGauges(effects) {
+  for (const k of KEYS) {
+    document.getElementById(`fill-${k}`).style.width = state.scores[k] + "%";
+    document.getElementById(`val-${k}`).textContent = state.scores[k];
+  }
+  for (const [k, d] of Object.entries(effects || {})) {
+    const e = document.getElementById(`delta-${k}`);
+    e.textContent = (d > 0 ? "+" : "") + d; e.className = "delta show " + (d > 0 ? "up" : "down");
+    setTimeout(() => { e.className = "delta"; }, 1500);
+  }
+  updatePanel(effects);
+}
+function addDay(day, title, focus) {
+  const d = el("div", "day"); d.append(el("span", null, `${day} · ${title}`));
+  if (focus) { const t = el("span", "tag", `${CONDITIONS[focus].name} 시험`); t.style.background = CONDITIONS[focus].color; d.append(t); }
+  else if (focus === null) { const t = el("span", "tag", "선택이 돌아온다"); t.style.background = "#475569"; d.append(t); }
+  $chat.append(d); $day.textContent = day === "D-day" ? "발표 당일" : `발표까지 ${day}`; down();
+}
+function addSys(text) { $chat.append(el("div", "sys", text)); down(); }
+function addMsg(line) {
+  const m = MEMBERS[line.from];
+  const row = el("div", "msg" + (line.from === "me" ? " mine" : ""));
+  if (line.from === "me") {
+    const n = unreadCount();
+    if (n > 0) row.append(el("span", "unread", String(n)));
+    const body = el("div", "body"); body.append(el("div", "bubble", line.text)); row.append(body);
+  } else {
+    const av = el("div", "avatar", m.name[0]); av.style.background = m.color;
+    const body = el("div", "body");
+    const name = el("div", "name", m.name);
+    if (line.dm) name.append(el("span", "dm", "개인톡"));
+    body.append(name, el("div", "bubble", line.text)); row.append(av, body);
+  }
+  $chat.append(row); down();
+}
+// D-2: 이전 선택이 돌아온 장면은 그날 고른 말과 함께 보여 준다
+function addBack(line) {
+  const h = state.history.find((x) => x.ev.day === line.back);
+  const c = CONDITIONS[line.cond];
+  const box = el("div", "back"); box.style.borderLeftColor = c.color;
+  box.innerHTML = `<b style="color:${c.color}">↩ ${line.back} ${c.name}</b> · 그때 내가 한 말: "${short(h.text, 40)}"`;
+  $chat.append(box); down();
+}
+async function say(line) {
+  if (line.back) { await wait(300); addBack(line); await wait(400); if (line.sys) { addSys(line.sys); await wait(500); return; } }
+  if (line.sys) { await wait(300); addSys(line.sys); await wait(500); return; }
+  if (line.from === "me") { addMsg(line); await wait(450); return; }
+  const m = MEMBERS[line.from];
+  const row = el("div", "msg typing");
+  const av = el("div", "avatar", m.name[0]); av.style.background = m.color;
+  const body = el("div", "body"); body.append(el("div", "name", m.name), el("div", "bubble", "•••"));
+  row.append(av, body); $chat.append(row); down();
+  await wait(Math.min(450 + line.text.length * 20, 1500));
+  row.remove(); addMsg(line); await wait(330);
+}
+function setChoices(nodes) { $choices.innerHTML = ""; nodes.forEach((n) => $choices.append(n)); }
+
+function showStart() {
+  stopDeck(); closeModal();
+  KEYS.forEach((k) => (state.scores[k] = START));
+  state.history = []; state.started = false; state.finished = false;
+  renderGauges(); renderTimeline(); $day.textContent = "발표까지 D-10";
+  $chat.innerHTML = "";
+  const card = el("div", "card");
+  const plan = [["D-10", "purpose"], ["D-8", "rules"], ["D-6", "commitment"], ["D-4", "interdependence"]]
+    .map(([d, k]) => `<span class="d">${d}</span><span style="color:${CONDITIONS[k].color}"><b>${CONDITIONS[k].name}</b> 시험 · 9주차 ${CONDITIONS[k].page}쪽</span>`).join("");
+  card.innerHTML = `
+    <h2>3조의 열흘</h2>
+    <p>당신은 3조 조장 <b>민준</b>입니다. 5명이 열흘 안에 15분짜리 발표 PPT를 만들어야 합니다. 주제는 <b>"일회용 컵, 우리 캠퍼스에서 줄일 수 있을까?"</b></p>
+    <p>날마다 팀의 조건 하나가 시험대에 오릅니다.</p>
+    <div class="plan">${plan}<span class="d">D-2·D-1</span><span>그때 고른 말이 <b>돌아옵니다</b></span></div>
+    <p>마지막엔 3조가 실제로 한 <b>발표를 재생</b>하고, 어느 슬라이드가 왜 무너졌는지 보여 줍니다.</p>
+    <p class="muted">모든 선택지는 실제 조장이 할 법한 말이에요. 3조와 조원은 가상의 인물입니다.</p>`;
+  $chat.append(card);
+  const btn = el("button", "primary", "시작하기"); btn.type = "button"; btn.onclick = startGame;
+  setChoices([btn]);
+}
+function startGame() {
+  KEYS.forEach((k) => (state.scores[k] = START));
+  state.flags = {}; state.tired = []; state.i = 0; state.history = []; state.started = true; state.finished = false;
+  $chat.innerHTML = ""; renderGauges(); play();
+}
+async function play() {
+  const ev = EVENTS[state.i];
+  setChoices([]);
+  const focus = focusOf(ev, state);
+  renderGauges(focus);
+  const title = ev.id === "final" ? (variantOf(state) === "sick" ? "조장이 쓰러졌다" : "결론 다툼") : ev.title;
+  addDay(ev.day, title, focus);
+  renderTimeline();
+  await wait(350);
+  for (const line of ev.intro(state)) await say(line);
+  const opts = ev.choices(state);
+  const btns = opts.map((o) => { const b = el("button", "choice", o.text); b.type = "button"; b.onclick = () => choose(o, ev); return b; });
+  setChoices([el("p", "hint", "어떻게 답할까?"), ...btns]);
+}
+async function choose(opt, ev) {
+  if (state.busy) return; state.busy = true; setChoices([]);
+  const before = { ...state.scores };
+  await say({ from: "me", text: clean(opt.text) });
+  const replies = opt.run(state);
+  const diff = Object.fromEntries(KEYS.map((k) => [k, state.scores[k] - before[k]]));
+  updateGauges(Object.fromEntries(Object.entries(diff).filter(([, d]) => d !== 0)));
+  state.history.push({ ev, text: opt.text, diff });
+  renderTimeline();
+  for (const r of replies) await say(r);
+  const last = state.i === EVENTS.length - 1;
+  const next = el("button", "primary", last ? "발표하러 가기" : "다음 날로"); next.type = "button";
+  next.onclick = () => { if (last) showResult(); else { state.i++; play(); } };
+  setChoices([next]); state.busy = false;
+}
+
+/* =========================================================
+   6. 발표 슬라이드 (약한 조건이 슬라이드를 망가뜨린다)
+   ========================================================= */
+function weak(k) { return state.scores[k] < WEAK_LINE; }
+function buildDeck() {
+  const P = weak("purpose"), C = weak("commitment"), R = weak("rules"), I = weak("interdependence");
+  // 상호의존성이 약할 때: 숫자를 안 맞췄으면 800개(old), 조장이 대신 맞췄으면 숫자는 맞지만 린이 설명하지 못한다(fixed)
+  const old = I && !state.flags.leaderFixed, fixed = I && state.flags.leaderFixed;
+  const S = [];
+  S.push({ who: "민준", kind: "cover",
+    html: `<div class="t">일회용 컵,<br>우리 캠퍼스에서 줄일 수 있을까?</div>` +
+      (P ? `<div class="g">3조 발표</div>` : `<div class="g">🎯 목표: 학생회가 "텀블러 할인"을 해 보고 싶게 만들기</div>`),
+    say: P ? "오늘은 일회용 컵에 대해 여러 가지를 알아보겠습니다." : "오늘 저희는 학생회에 한 가지를 제안하려고 합니다.",
+    bugs: [] });
+  S.push({ who: "지호", hd: "현황: 교내 일회용 컵",
+    html: `<div class="big">하루 3,000개</div><p class="src">캠퍼스 전체 카페 합계 (가상 데이터)</p>`,
+    say: "캠퍼스 전체로 세면 하루 3,000개가 버려집니다.", bugs: [] });
+  S.push({ who: "도윤", hd: "다른 대학은 어떻게 했나", tpl: R ? "b" : "a",
+    html: `<ul><li>A대: 텀블러 지참 시 할인</li><li>B대: 컵 보증금제</li><li>C대: 세척대 설치</li></ul><p class="src">가상 사례</p>`,
+    say: "다른 대학들은 이렇게 하고 있습니다.",
+    bugs: R ? [["rules", "혼자 다른 템플릿·글씨체"]] : [] });
+  S.push({ who: "하은", hd: "설문: 왜 텀블러를 안 쓸까?",
+    html: C
+      ? `<p>응답 6명</p><div class="ph">그래프 준비 중…</div>`
+      : `<p>응답 48명 (가상 데이터)</p><div class="bars2">
+          <div><span>씻을 곳이 없어서</span><i style="width:100%"></i><span>41%</span></div>
+          <div><span>들고 다니기 귀찮아서</span><i style="width:80%"></i><span>33%</span></div>
+          <div><span>할인이 없어서</span><i style="width:63%"></i><span>26%</span></div></div>`,
+    say: C ? "응답이… 6명이라서요. 그래프는 아직…" : "응답자 41%가 씻을 곳이 없어서라고 답했습니다.",
+    bugs: C ? [["commitment", "응답 6명, 그래프 없음"]] : [] });
+  S.push({ who: "린", hd: "제안하면 얼마나 줄까?",
+    html: (old ? `<div class="calc">하루 800개 × 30% = <b>240개</b> 절감</div>` : `<div class="calc">하루 3,000개 × 30% = <b>900개</b> 절감</div>`) +
+      `<p class="src">할인 제도 참여율 30% 가정 (가상)</p>` + (R ? `<span class="stamp">수정 전 그래프 v1</span>` : ""),
+    say: old ? "하루 800개 중 30%, 240개를 줄일 수 있습니다." : fixed ? "900개를… 줄일 수 있습니다. (민준이 고쳐 준 숫자를 그대로 읽는다)" : "하루 3,000개 중 30%, 900개를 줄일 수 있습니다.",
+    bugs: [...(old ? [["interdependence", "앞의 2번은 3,000개인데 여기는 800개"]] : fixed ? [["interdependence", "숫자는 조장이 맞췄지만 린은 계산을 모름"]] : []), ...(R ? [["rules", "수정 전 파일이 들어감"]] : [])] });
+  const voted = state.flags.voted;
+  S.push(P
+    ? (voted
+        ? { who: "민준", hd: "결론: 다른 대학 사례 정리", html: `<p>A대 할인 · B대 보증금 · C대 세척대</p><p>여러 방법이 있습니다.</p>`,
+            say: "이렇게 여러 방법이 있다는 걸 알 수 있었습니다.", bugs: [["purpose", "결론이 1번의 질문에 답하지 않음"]] }
+        : { who: "민준", hd: "결론: 텀블러 굿즈 디자인 공모전을 열자!", html: `<p>재밌고 참여도 높을 것 같습니다 🎨</p>`,
+            say: "그래서 저희는 굿즈 공모전을 제안합니다!", bugs: [["purpose", "결론이 1번의 질문에 답하지 않음"]] })
+    : { who: "민준", hd: "제안: 텀블러 지참 시 300원 할인",
+        html: (voted ? `<p>A대 할인 · B대 보증금 · C대 세척대 중 →</p>` : "") + `<p>학생회에 한 학기 시범 운영을 제안합니다.</p><p>→ 하루 약 ${old ? "240" : "900"}개 절감 기대</p>`,
+        say: "학생회에 한 학기 시범 운영을 제안합니다.", bugs: [] });
+  const qa = [];
+  if (R) qa.push({ sys: "(발표 시작 전, 3분 동안 최신 파일을 찾았다)" });
+  if (P) qa.push({ q: "교수님: 그래서 이 발표, 누구한테 뭘 하자는 거예요?", a: "민준: 아… 그게…", cond: "purpose" });
+  if (C) qa.push({ q: "교수님: 설문 6명으로 결론 내기는 어렵지 않나요?", a: "하은: …네", cond: "commitment" });
+  if (old) qa.push({ q: "교수님: 2번이랑 5번 숫자가 다른데 어느 게 맞아요?", a: "지호·린이 서로를 쳐다봤다.", cond: "interdependence" });
+  if (fixed) qa.push({ q: "교수님: 5번의 900개는 어떻게 계산한 거예요?", a: "린: 그건… 민준이 고쳐 줘서…", cond: "interdependence" });
+  if (!P && !C && !I) qa.push({ q: "교수님: 학생회에 바로 가져가도 되겠네요. 세척대 얘기도 같이 해 보세요.", a: "민준: 네, 4번 설문 결과로 같이 말하겠습니다!" });
+  S.push({ who: "질의응답", kind: "qa", hd: "질의응답", qa,
+    say: qa.filter((x) => x.q).map((x) => x.q).join(" "),
+    bugs: qa.filter((x) => x.cond).map((x) => [x.cond, x.q.replace("교수님: ", "")]) });
+  return S;
+}
+
+const deck = { slides: [], i: 0, timer: null };
+function stopDeck() { if (deck.timer) { clearInterval(deck.timer); deck.timer = null; } }
+function slideHTML(s) {
+  const ribbons = "";
+  if (s.kind === "cover") return `<div class="sv cover">${s.html}${ribbons}<span class="who">${s.who}</span></div>`;
+  if (s.kind === "qa") return `<div class="sv qa"><div class="hd">${s.hd}</div><div class="bd">${s.qa.map((x) =>
+      x.sys ? `<div class="q" style="color:#fca5a5">${x.sys}</div>` : `<div class="q">❓ ${x.q}<br><span style="color:#9ca3af">↳ ${x.a}</span></div>`).join("")}</div></div>`;
+  return `<div class="sv tpl-${s.tpl || "a"}"><div class="hd">${s.hd}</div><div class="bd">${s.html}</div>${ribbons}<span class="who">${s.who}</span></div>`;
+}
+function showSlide(i) {
+  deck.i = (i + deck.slides.length) % deck.slides.length;
+  const s = deck.slides[deck.i];
+  document.getElementById("slideView").innerHTML = slideHTML(s);
+  document.getElementById("slideView").classList.toggle("buggy", s.bugs.length > 0);
+  fitSlide();
+  document.getElementById("bugs").innerHTML = s.bugs.length
+    ? s.bugs.map(([k, t]) => `<span class="ribbon" style="background:${CONDITIONS[k].color}">❌ ${CONDITIONS[k].name} · ${t}</span>`).join("")
+    : (s.kind === "qa" ? "" : `<span class="ribbon ok">✅ 이 슬라이드는 이상 없음</span>`);
+  document.getElementById("speech").innerHTML = s.kind === "qa"
+    ? "🎤 <b>질의응답</b>" : `🎤 <b>${s.who}</b>: "${s.say}"`;
+  document.getElementById("slideNo").textContent = `${deck.i + 1} / ${deck.slides.length}`;
+  document.querySelectorAll(".dthumbs button").forEach((b, j) => b.setAttribute("aria-current", String(j === deck.i)));
+}
+function mountDeck(root) {
+  deck.slides = buildDeck(); deck.i = 0; stopDeck();
+  const files = weak("rules") ? "📁 3조_최종.pptx · 3조_최종_진짜.pptx · 3조_최종_진짜(2).pptx ← 어느 게 최신?" : "📁 3조_발표.pptx";
+  root.innerHTML = `
+    <div class="filebar${weak("rules") ? " bad" : ""}">${files}</div>
+    <div id="slideView"></div>
+    <div class="bugs" id="bugs"></div>
+    <div class="speech" id="speech"></div>
+    <div class="dctl"><button type="button" id="dPrev">◀</button><button type="button" id="dPlay">▶ 발표 재생</button>
+      <span class="n" id="slideNo"></span><button type="button" id="dNext">▶▶</button></div>
+    <div class="dthumbs">${deck.slides.map((s, j) => `<button type="button" class="${s.bugs.length ? "has-bug" : ""}" data-j="${j}">${s.kind === "qa" ? "Q&A" : j + 1}</button>`).join("")}</div>`;
+  root.querySelector("#dPrev").onclick = () => { stopDeck(); setPlay(); showSlide(deck.i - 1); };
+  root.querySelector("#dNext").onclick = () => { stopDeck(); setPlay(); showSlide(deck.i + 1); };
+  root.querySelector("#dPlay").onclick = () => {
+    if (deck.timer) { stopDeck(); setPlay(); return; }
+    if (deck.i === deck.slides.length - 1) showSlide(0);
+    deck.timer = setInterval(() => { if (deck.i === deck.slides.length - 1) { stopDeck(); setPlay(); return; } showSlide(deck.i + 1); }, 3200 * state.speed);
+    setPlay();
+  };
+  root.querySelectorAll(".dthumbs button").forEach((b) => (b.onclick = () => { stopDeck(); setPlay(); showSlide(+b.dataset.j); }));
+  fitObserver.observe(root.querySelector("#slideView"));
+  showSlide(0);
+}
+// 슬라이드는 360px 기준으로 그리고, 들어갈 칸 너비에 맞춰 확대·축소한다
+const SLIDE_BASE = 360;
+function fitSlide() {
+  const box = document.getElementById("slideView"); if (!box) return;
+  const sv = box.querySelector(".sv"); if (!sv) return;
+  const scale = box.clientWidth / SLIDE_BASE;
+  sv.style.transform = `scale(${scale})`;
+  box.style.height = (SLIDE_BASE * 9 / 16) * scale + "px";
+}
+const fitObserver = new ResizeObserver(fitSlide);
+function openModal() {
+  const d = document.getElementById("deck"); if (!d) return;
+  document.getElementById("mslot").append(d);
+  document.getElementById("modal").hidden = false; fitSlide();
+  document.getElementById("modalClose").focus();
+}
+function closeModal() {
+  const m = document.getElementById("modal"); if (m.hidden) return;
+  const d = document.getElementById("deck"); const home = document.getElementById("deckHome");
+  if (d && home) home.append(d);
+  m.hidden = true; fitSlide();
+  const b = document.getElementById("bigView"); if (b) b.focus();
+}
+document.getElementById("modalClose").onclick = closeModal;
+document.getElementById("modal").addEventListener("click", (e) => { if (e.target.id === "modal") closeModal(); });
+document.addEventListener("keydown", (e) => {
+  if (document.getElementById("modal").hidden) return;
+  if (e.key === "Escape") closeModal();
+  if (e.key === "ArrowRight") document.getElementById("dNext")?.click();
+  if (e.key === "ArrowLeft") document.getElementById("dPrev")?.click();
+});
+function setPlay() { const b = document.getElementById("dPlay"); if (b) b.textContent = deck.timer ? "⏸ 정지" : "▶ 발표 재생"; }
+
+function pickEnding() {
+  if (KEYS.every((k) => state.scores[k] >= TEAM_LINE)) return "team";
+  return KEYS.reduce((lo, k) => (state.scores[k] < state.scores[lo] ? k : lo), KEYS[0]);
+}
+// 조건마다: 무너졌나/아슬아슬/지켜졌나 + 그 조건을 움직인 내 말
+function failList() {
+  return KEYS.map((k) => {
+    const c = CONDITIONS[k]; const sp = SPOTS[k]; const v = state.scores[k];
+    const level = v < WEAK_LINE ? "bad" : v < TEAM_LINE ? "mid" : "good";
+    const mark = { bad: "❌ 무너짐", mid: "⚠️ 아슬아슬", good: "✅ 지켜짐" }[level];
+    const what = level === "bad" ? (typeof sp.bad === "function" ? sp.bad() : sp.bad) : level === "good" ? sp.good : "슬라이드는 버텼지만 팀이라 하기엔 부족했다";
+    const causes = state.history.filter((h) => h.diff[k] !== 0)
+      .map((h) => `${h.ev.day} "${short(h.text)}" (${h.diff[k] > 0 ? "+" : ""}${h.diff[k]})`).join("<br>");
+    return `<li class="${level}"><b style="color:${c.color}">${c.name}</b> ${mark} · ${sp.where}<br>${what}
+      <span class="cause">← ${causes || "이 조건을 움직인 선택이 없었다"}</span></li>`;
+  }).join("");
+}
+
+function showResult() {
+  state.finished = true; renderTimeline(); renderPanel(null);
+  const key = pickEnding(); const e = ENDINGS[key];
+  addDay("D-day", "발표");
+  const badgeColor = key === "team" ? "var(--good)" : CONDITIONS[key].color;
+  const badge = key === "team" ? "엔딩: 팀이 됐다" : `엔딩: ${CONDITIONS[key].name}이 가장 크게 무너졌다`;
+  const bars = KEYS.map((k) => `<div class="row"><span>${CONDITIONS[k].name}</span>
+    <div class="bar"><div class="fill" style="width:${state.scores[k]}%;background:${CONDITIONS[k].color}"></div></div><b>${state.scores[k]}</b></div>`).join("");
+  const links = LINKS.filter((l) => l.when(state)).map((l) => {
+    const text = typeof l.text === "function" ? l.text() : l.text;
+    return `<li class="${l.good ? "good" : "bad"}">${text}<div class="muted">${l.conds.map((k) => CONDITIONS[k].name).join(" → ")}</div></li>`;
+  }).join("");
+
+  const card = el("div", "card");
+  card.innerHTML = `
+    <span class="badge" style="background:${badgeColor}">${badge}</span>
+    <h2>${e.title}</h2>
+    <p>${e.scene}</p>
+    <h3>3조의 발표 (빨간 점 = 무너진 슬라이드)</h3>
+    <div id="deckHome"><div class="deck" id="deck"></div></div>
+    <button type="button" class="bigview" id="bigView">큰 화면으로 발표 보기</button>
+    <h3>${key === "team" ? "네 조건이 발표에서 어떻게 지켜졌나" : "어디서, 왜 무너졌나"}</h3>
+    <ul class="fails">${failList()}</ul>
+    ${links ? `<h3>조건끼리도 이어져 있었다</h3><ul class="links">${links}</ul>` : ""}
+    <h3>최종 네 조건</h3>
+    <div class="final-bars">${bars}</div>
+    <h3>강의에서는</h3>
+    <p>${e.lecture}</p>
+    <p class="muted">3조는 가상의 조이고, 슬라이드 속 수치도 가상입니다. 결과는 선택에 따른 예시일 뿐 실제 성과를 예측하지 않습니다.</p>`;
+  $chat.append(card);
+  mountDeck(card.querySelector("#deck"));
+  card.querySelector("#bigView").onclick = openModal;
+  requestAnimationFrame(() => card.scrollIntoView({ block: "start" }));
+  const again = el("button", "primary", "다시 하기"); again.type = "button"; again.onclick = showStart;
+  setChoices([again]);
+}
+
+/* =========================================================
+   7. 시작
+   ========================================================= */
+document.querySelectorAll("[data-speed]").forEach((b) => b.addEventListener("click", () => {
+  state.speed = parseFloat(b.dataset.speed);
+  document.querySelectorAll("[data-speed]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+}));
+document.getElementById("gaugeToggle").addEventListener("click", (ev) => {
+  const on = ev.currentTarget.getAttribute("aria-pressed") !== "true";
+  ev.currentTarget.setAttribute("aria-pressed", String(on));
+  $gauges.classList.toggle("show", on);
+});
+showStart();
+</script>
+</body>
+</html>

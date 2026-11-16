@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팀 디버거: 3조의 발표는 왜 무너졌을까?</title>
+<style>
+  :root {
+    --bg: #0f172a; --panel: #111827; --card: #1f2937; --ink: #e5e7eb; --muted: #94a3b8; --line: #334155;
+    --accent: #facc15;
+    --purpose: #60a5fa; --commitment: #fb923c; --rules: #a78bfa; --interdependence: #34d399;
+    --good: #22c55e; --bad: #ef4444; --chatbg: #b9cbdc;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; background: #020617; color: var(--ink); display: flex; justify-content: center; }
+  .app { width: 100%; max-width: 480px; height: 100vh; height: 100dvh; display: flex; flex-direction: column; background: var(--bg); }
+
+  header { padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  .hrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  header h1 { font-size: 15px; margin: 0; }
+  .stats { display: flex; gap: 10px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .stats b { color: var(--ink); }
+  .found { display: flex; gap: 6px; margin-top: 8px; }
+  .found span { flex: 1; font-size: 11px; text-align: center; padding: 4px 0; border-radius: 6px; border: 1px dashed var(--line); color: var(--muted); }
+  .found span.on { border-style: solid; color: #0b1220; font-weight: 700; }
+
+  nav.tabs { display: flex; border-bottom: 1px solid var(--line); background: var(--panel); }
+  nav.tabs button { flex: 1; font: inherit; font-size: 13px; padding: 10px 0; background: none; border: 0; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
+  nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 700; }
+  nav.tabs button.pulse { animation: pulse 1s ease 3; }
+  @keyframes pulse { 50% { background: rgba(250,204,21,.18); } }
+
+  .stage { flex: 1; position: relative; min-height: 0; }
+  main { position: absolute; inset: 0; overflow-y: auto; }
+  .view { display: none; padding: 12px; }
+  .view.on { display: block; }
+
+  /* 제출 파일 + 슬라이드 */
+  .file { font-family: ui-monospace, Menlo, monospace; font-size: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; cursor: pointer; }
+  .file .f { display: inline-block; margin: 2px 6px 2px 0; padding: 2px 6px; background: #0b1220; border-radius: 4px; }
+  .sv { position: relative; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #fff; color: #111827; cursor: crosshair; }
+  .sv .hd { height: 17%; display: flex; align-items: center; padding: 0 12px; font-size: 15px; font-weight: 800; color: #fff; background: #1d4ed8; }
+  .sv .bd { padding: 10px 14px; font-size: 14px; line-height: 1.5; }
+  .sv .who { position: absolute; right: 8px; bottom: 6px; font-size: 10px; color: #6b7280; pointer-events: none; }
+  .sv.tpl-b { background: #14532d; color: #f0fdf4; font-family: "Times New Roman", Georgia, serif; }
+  .sv.tpl-b .hd { background: transparent; color: #fef08a; font-style: italic; font-weight: 400; font-size: 18px; border-bottom: 1px solid #86efac; }
+  .sv.tpl-b .who { color: #bbf7d0; }
+  .sv.cover { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(135deg,#1e3a8a,#2563eb); color: #fff; padding: 10px; }
+  .sv.cover .t { font-size: 20px; font-weight: 800; line-height: 1.3; padding: 2px 6px; }
+  .sv.cover .g { margin-top: 10px; font-size: 12px; background: rgba(255,255,255,.18); padding: 4px 8px; border-radius: 6px; }
+  .sv.cover .who { color: #c7d2fe; }
+  .sv.qa { background: #0b1220; color: #e5e7eb; }
+  .sv.qa .hd { background: #334155; }
+  .sv.qa .bd { font-size: 13px; }
+  .sv.qa .q { margin: 4px 0; padding: 2px 4px; border-radius: 4px; }
+  .sv .big { font-size: 34px; font-weight: 800; color: #1d4ed8; margin: 8px 0 2px; display: inline-block; padding: 0 4px; }
+  .sv .src { font-size: 11px; color: #6b7280; margin: 2px 0; display: inline-block; }
+  .sv.tpl-b .src { color: #bbf7d0; }
+  .sv ul { margin: 4px 0; padding: 2px 4px 2px 20px; display: inline-block; }
+  .sv .calc { font-size: 17px; margin: 14px 0 4px; display: inline-block; padding: 0 4px; }
+  .sv .calc b { font-size: 22px; color: #047857; }
+  .sv .ph { margin-top: 8px; height: 48%; border: 2px dashed #9ca3af; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 14px; }
+  .sv .stamp { position: absolute; left: 50%; top: 66%; transform: translate(-50%,-50%) rotate(-8deg); border: 2px solid #9ca3af; color: #9ca3af; padding: 2px 10px; font-size: 13px; font-weight: 700; border-radius: 4px; background: rgba(255,255,255,.6); }
+  .hot { outline: 2px dashed transparent; outline-offset: 2px; transition: outline-color .2s; cursor: pointer; }
+  .hint-on .hot { outline-color: rgba(250,204,21,.8); }
+  .hot.solved { outline: 2px solid var(--good) !important; }
+  .speech { margin: 8px 2px 0; font-size: 13px; line-height: 1.5; color: #f3f4f6; min-height: 20px; }
+  .speech b { color: #fde68a; }
+  .controls { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .controls button { font: inherit; font-size: 13px; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+  .controls .scene-no { flex: 1; text-align: center; font-size: 12px; color: var(--muted); }
+  .thumbs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 8px; }
+  .thumbs button { font: inherit; font-size: 11px; padding: 7px 0; border-radius: 6px; border: 2px solid transparent; background: var(--card); color: var(--ink); cursor: pointer; }
+  .thumbs button[aria-current="true"] { border-color: var(--accent); }
+  .tip { font-size: 12px; color: var(--muted); margin: 10px 2px; line-height: 1.5; }
+
+  /* 단톡방 기록 */
+  .log { background: var(--chatbg); border-radius: 10px; padding: 8px 10px 14px; color: #1f2933; }
+  .log .day { text-align: center; margin: 12px 0 6px; }
+  .log .day span { display: inline-block; font-size: 11px; background: rgba(0,0,0,.2); color: #fff; padding: 3px 10px; border-radius: 999px; }
+  .log .sys { text-align: center; font-size: 11px; color: #4b5866; margin: 6px 0; padding: 2px 4px; border-radius: 6px; }
+  .m { display: flex; gap: 7px; margin: 5px 0; align-items: flex-start; }
+  .m.mine { justify-content: flex-end; }
+  .av { flex: 0 0 28px; height: 28px; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .m .nm { font-size: 11px; color: #3d4a57; margin: 0 0 2px 2px; }
+  .bb { background: #fff; padding: 6px 10px; border-radius: 3px 12px 12px 12px; font-size: 13px; line-height: 1.45; max-width: 270px; word-break: keep-all; overflow-wrap: anywhere; }
+  .m.mine .bb { background: #ffe14d; border-radius: 12px 3px 12px 12px; }
+  .tracing .log .bb, .tracing .log .sys { cursor: pointer; }
+  .tracing .log .bb:hover, .tracing .log .sys:hover { box-shadow: 0 0 0 2px #f59e0b; }
+  .root { box-shadow: 0 0 0 2px var(--good) !important; }
+  .nope { animation: shake .3s; }
+  @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+  /* 사건 파일 */
+  .case { background: var(--card); border-radius: 10px; padding: 12px; margin-bottom: 10px; border-left: 4px solid var(--line); font-size: 13px; line-height: 1.55; }
+  .case h3 { margin: 0 0 6px; font-size: 14px; }
+  .chain { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+  .chain div { background: #0b1220; border-radius: 6px; padding: 6px 8px; }
+  .chain .arr { background: none; padding: 0 8px; color: var(--muted); font-size: 12px; }
+  .empty-case { color: var(--muted); font-size: 13px; text-align: center; padding: 30px 10px; }
+
+  footer { border-top: 1px solid var(--line); background: var(--panel); padding: 10px 12px 14px; }
+  .prompt { font-size: 13px; line-height: 1.5; min-height: 20px; }
+  .prompt b { color: var(--accent); }
+  .row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .btn { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+  .btn.primary { background: var(--accent); color: #111; border-color: var(--accent); font-weight: 700; }
+  .conds { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .conds button { font: inherit; font-size: 13px; padding: 10px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; text-align: left; }
+  .conds button small { display: block; color: var(--muted); font-size: 11px; }
+
+  .toast { position: fixed; left: 50%; bottom: 130px; transform: translateX(-50%); background: #111827; color: #fff; border: 1px solid var(--line); padding: 8px 14px; border-radius: 14px; font-size: 13px; opacity: 0; transition: opacity .25s; pointer-events: none; width: max-content; max-width: min(90%, 420px); text-align: center; z-index: 10; line-height: 1.45; }
+  .toast.show { opacity: 1; }
+
+  .overlay { position: absolute; inset: 0; background: var(--bg); padding: 18px 16px; overflow-y: auto; z-index: 5; }
+  .overlay h2 { margin: 0 0 8px; font-size: 20px; }
+  .overlay h3 { font-size: 15px; margin: 16px 0 6px; }
+  .overlay p, .overlay li { font-size: 14px; line-height: 1.6; }
+  .overlay .muted { color: var(--muted); font-size: 12px; }
+  .bigstat { display: flex; gap: 10px; margin: 10px 0; }
+  .bigstat div { flex: 1; background: var(--card); border-radius: 10px; padding: 10px; text-align: center; }
+  .bigstat b { display: block; font-size: 20px; }
+  .links li { margin: 8px 0; }
+
+  /* ===== 데스크톱 데모 (GitHub Pages) ===== */
+  .home { font-size: 12px; color: var(--muted); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; }
+  .home:hover { color: var(--ink); }
+  .desk-h { display: none; }
+  .fitbox { position: relative; }
+  .fitbox .sv { width: 440px; transform-origin: 0 0; }
+  @media (min-width: 1024px) {
+    body { background: #0b1222; }
+    .app { max-width: 1360px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+    header { padding: 12px 20px; display: flex; align-items: center; gap: 20px; }
+    header .hrow { flex: 0 0 auto; gap: 18px; }
+    header h1 { font-size: 17px; }
+    .found { flex: 1; margin-top: 0; }
+    .found span { font-size: 12px; padding: 6px 0; }
+    nav.tabs { display: none; }
+    main { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(360px, 1fr); grid-template-rows: minmax(0, 1.55fr) minmax(0, 1fr); grid-template-areas: "result log" "case log"; overflow: hidden; }
+    .view { display: block; overflow-y: auto; padding: 14px 20px; }
+    #view-result { grid-area: result; }
+    #view-log { grid-area: log; border-left: 1px solid var(--line); background: #0d1628; transition: box-shadow .3s; }
+    #view-case { grid-area: case; border-top: 1px solid var(--line); }
+    .fitbox { margin: 0 auto; }
+    #view-result .tip { display: none; }
+    .desk-h { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; font-weight: 800; margin: 0 0 10px; color: #cbd5e1; }
+    .desk-h span { font-weight: 400; font-size: 12px; color: var(--muted); }
+    .tracing #view-log { box-shadow: inset 0 0 0 3px #f59e0b; }
+    #view-log.flash { animation: flash 1s ease 2; }
+    @keyframes flash { 50% { background: #2a2410; } }
+    .bb { max-width: 340px; font-size: 14px; }
+    footer { padding: 12px 20px 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .prompt { font-size: 15px; flex: 1 1 420px; }
+    #actions { flex: 0 1 auto; }
+    #actions .row, #actions .conds { margin-top: 0; }
+    .conds { grid-template-columns: repeat(4, minmax(120px, 1fr)); }
+    .toast { bottom: 110px; font-size: 14px; }
+    .overlay { padding: 32px max(24px, calc(50% - 360px)); }
+    .case { font-size: 13.5px; }
+  }
+  @media (min-width: 1200px) {
+    main { grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr) minmax(280px, .8fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "result log case"; }
+    #view-case { border-top: 0; border-left: 1px solid var(--line); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div class="hrow">
+      <h1>🔍 팀 디버거 · 3조 사건</h1>
+      <a class="home" href="../index.html">처음으로</a>
+      <div class="stats"><span>⏱ <b id="time">0:00</b></span><span>헛짚음 <b id="miss">0</b></span></div>
+    </div>
+    <div class="found" id="found"></div>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button type="button" role="tab" data-tab="result" aria-selected="true">📽 발표 PPT</button>
+    <button type="button" role="tab" data-tab="log" aria-selected="false">💬 단톡방 기록</button>
+    <button type="button" role="tab" data-tab="case" aria-selected="false">📋 사건 파일</button>
+  </nav>
+  <div class="stage" id="stage">
+    <main id="main">
+      <section class="view on" id="view-result"></section>
+      <section class="view" id="view-log"></section>
+      <section class="view" id="view-case"></section>
+    </main>
+  </div>
+  <footer>
+    <div class="prompt" id="prompt"></div>
+    <div id="actions"></div>
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   데이터 (근거: 9주차 Building a Team 6–10쪽)
+   시나리오: 「3조의 열흘」 게임에서 네 조건이 모두 무너지는 경로와 같은 대화
+   ========================================================= */
+const CONDITIONS = {
+  purpose:         { name: "공동 목적",   page: 7,  color: "var(--purpose)" },
+  commitment:      { name: "헌신",       page: 8,  color: "var(--commitment)" },
+  rules:           { name: "운영 규칙",   page: 9,  color: "var(--rules)" },
+  interdependence: { name: "상호의존성", page: 10, color: "var(--interdependence)" },
+};
+const MEMBERS = {
+  me: { name: "민준(조장)", color: "#334155" }, jiho: { name: "지호", color: "#2563eb" },
+  doyun: { name: "도윤", color: "#0891b2" }, haeun: { name: "하은", color: "#db2777" }, rin: { name: "린", color: "#7c3aed" },
+};
+
+// 단톡방 기록. id로 단서를 구분한다.
+const LOG = [
+  { day: "D-10 · 첫 회의" },
+  { id: "p1", from: "jiho",  text: "주제 '일회용 컵 줄이기' 확정! 근데 발표 방향은 어떻게 감?" },
+  { id: "p2", from: "jiho",  text: "난 현황 데이터 깔끔하게 보여 주는 정보 전달형이 좋을 듯" },
+  { id: "p3", from: "haeun", text: "학생들 목소리가 중요하지 않아? 설문 위주로 가자" },
+  { id: "p4", from: "doyun", text: "교수님은 해결책 좋아하시던데. 제안 위주로 ㄱ" },
+  { id: "p5", from: "rin",   text: "저는… 아무거나 좋아요 ㅎㅎ" },
+  { id: "P",  from: "me",    text: "다 좋은 의견이네! 일단 각자 맡은 파트 조사해 오자. 합치면서 맞추면 돼" },
+  { id: "x1", from: "doyun", text: "ㅇㅋ" },
+  { id: "x2", from: "haeun", text: "그럼 난 설문 쪽으로 할게~" },
+  { id: "x3", from: "jiho",  text: "난 데이터 위주로 ㄱㄱ" },
+
+  { day: "D-8 · 초안 마감" },
+  { id: "r1", from: "haeun", text: "오늘 슬라이드 초안 마감 맞지??" },
+  { id: "r2", from: "rin",   text: "아 저는 일요일까지인 줄 알았어요" },
+  { id: "r3", from: "doyun", text: "템플릿 뭐 씀? 난 내 거 그냥 씀" },
+  { id: "r4", from: "jiho",  text: "파일 다 '최종'이라 뭐가 뭔지 모르겠다 ㅋㅋㅋ" },
+  { id: "R",  from: "me",    text: "괜찮아 어디든 올려 줘, 내가 나중에 합칠게" },
+  { id: "x4", from: "haeun", text: "헐 고마워 민준아" },
+  { id: "x5", from: "doyun", text: "ㄱㅅ" },
+
+  { day: "D-6 · 중간 점검" },
+  { id: "c0", from: "jiho",  text: "중간 점검~ 다들 어디까지 했어?" },
+  { id: "x6", from: "doyun", text: "사례 3개 찾음" },
+  { id: "c1", from: "haeun", text: "설문은… 아직 응답이 6명이에요 ㅠ" },
+  { id: "C1", from: "jiho",  text: "6명? 이 정도면 무임승차 아님? ㅋㅋ" },
+  { id: "c2", sys: "하은 님이 입력하다가 멈췄습니다." },
+  { id: "C2", from: "me",    text: "ㅋㅋ 하은 분발하자~ 다들 파이팅!" },
+  { id: "c3", from: "haeun", text: "네… 더 모아볼게요" },
+
+  { day: "D-4 · 숫자가 다르다" },
+  { id: "i1", from: "jiho",  text: "전에 800개라고 했던 거, 캠퍼스 전체로 다시 세니까 하루 3,000개야. 업데이트함!" },
+  { id: "i2", from: "doyun", text: "어 근데 린 절감 효과 슬라이드는 아직 800개 기준인데?" },
+  { id: "I1", from: "doyun", text: "뭐 각자 파트니까 내가 건드릴 건 아니지 ㅋㅋ" },
+  { id: "i3", sys: "린 님이 메시지를 읽었습니다." },
+  { id: "I2", from: "me",    text: "각자 파트는 각자 책임지자. 린이 알아서 고치겠지" },
+  { id: "x7", from: "doyun", text: "ㅇㅋ" },
+
+  { day: "D-2 · 합쳐 보는 날" },
+  { id: "x8", sys: "슬라이드를 처음으로 한 파일에 합쳤다." },
+  { id: "p8", from: "jiho",  text: "합쳐 보니까 내 건 정보 전달, 하은 건 설문, 도윤 건 제안이네 ㅋㅋ 결론 뭐로 해?" },
+  { id: "r5", from: "doyun", text: "템플릿 두 개 섞여 있음 ㅋㅋ 그래프도 수정 전 버전 들어간 듯" },
+  { id: "c4", sys: "하은 님이 새벽 2시에 파일을 올렸습니다: 하은_설문.pptx" },
+  { id: "c5", from: "haeun", text: "응답은 6명 그대로예요. 그래프는 시간이 없어서…" },
+  { id: "i4", from: "rin",   text: "…저 아직 800개로 되어 있어요. 어느 숫자로 바꿔야 하는지 몰라서요" },
+  { id: "i5", from: "me",    text: "각자 자기 파트만 연습해 오자" },
+
+  { day: "D-1 · 결론 다툼" },
+  { id: "p9",  from: "haeun", text: "결론은 '텀블러 굿즈 공모전 열자'로 가자! 재밌잖아" },
+  { id: "x9",  from: "doyun", text: "난 다른 대학 사례 정리표로 끝내는 게 나은데" },
+  { id: "x10", from: "jiho",  text: "이걸로 한 시간째임…" },
+  { id: "p6",  from: "me",    text: "잠깐, 우리 처음에 뭘 목표로 하기로 했었지?" },
+  { id: "p7",  from: "jiho",  text: "…그런 거 정한 적 없지 않나?" },
+  { id: "x11", from: "doyun", text: "ㅋㅋㅋ 없었던 듯" },
+  { id: "p10", from: "me",    text: "그냥 하은 말대로 굿즈 공모전으로 하자. 내가 합칠게" },
+
+  { day: "D-day · 발표" },
+  { id: "r6", sys: "발표 3분 전: '3조_최종_진짜(2).pptx'가 최신인지 확인하는 중…" },
+];
+
+// 발표 PPT: 3조가 실제로 한 발표 (6장 + 질의응답). data-hot 값으로 단서를 구분한다.
+const FILES = ["3조_최종.pptx", "3조_최종_진짜.pptx", "3조_최종_진짜(2).pptx"];
+const SLIDES = [
+  { who: "민준", kind: "cover", say: "오늘은 일회용 컵에 대해 여러 가지를 알아보겠습니다.",
+    html: `<div class="t hot" data-hot="cover">일회용 컵,<br>우리 캠퍼스에서 줄일 수 있을까?</div><div class="g hot" data-hot="cover">3조 발표</div>` },
+  { who: "지호", hd: "현황: 교내 일회용 컵", say: "캠퍼스 전체로 세면 하루 3,000개가 버려집니다.",
+    html: `<div class="big hot" data-hot="num2">하루 3,000개</div><br><span class="src hot" data-hot="ok-src">캠퍼스 전체 카페 합계 (가상 데이터)</span>` },
+  { who: "도윤", hd: "다른 대학은 어떻게 했나", tpl: "b", hdHot: "rules", bodyHot: "rules", say: "다른 대학들은 이렇게 하고 있습니다.",
+    html: `<ul class="hot" data-hot="ok-cases"><li>A대: 텀블러 지참 시 할인</li><li>B대: 컵 보증금제</li><li>C대: 세척대 설치</li></ul><br><span class="src">가상 사례</span>` },
+  { who: "하은", hd: "설문: 왜 텀블러를 안 쓸까?", say: "응답이… 6명이라서요. 그래프는 아직…",
+    html: `<p class="hot" data-hot="commitment" style="display:inline-block;margin:0;padding:0 4px">응답 6명</p><div class="ph hot" data-hot="commitment">그래프 준비 중…</div>` },
+  { who: "린", hd: "제안하면 얼마나 줄까?", say: "하루 800개 중 30%, 240개를 줄일 수 있습니다.",
+    html: `<div class="calc hot" data-hot="interdependence">하루 800개 × 30% = <b>240개</b> 절감</div><br><span class="src">할인 제도 참여율 30% 가정 (가상)</span><span class="stamp hot" data-hot="rules">수정 전 그래프 v1</span>` },
+  { who: "민준", hd: "결론: 텀블러 굿즈 디자인 공모전을 열자!", hdHot: "purpose", say: "그래서 저희는 굿즈 공모전을 제안합니다!",
+    html: `<p class="hot" data-hot="purpose" style="display:inline-block;padding:0 4px">재밌고 참여도 높을 것 같습니다 🎨</p>` },
+  { who: "질의응답", kind: "qa", hd: "질의응답", say: "",
+    html: `<div class="q hot" data-hot="rules" style="color:#fca5a5">(발표 시작 전, 3분 동안 최신 파일을 찾았다)</div>
+      <div class="q hot" data-hot="purpose">❓ 교수님: 그래서 이 발표, 누구한테 뭘 하자는 거예요?<br><span style="color:#9ca3af">↳ 민준: 아… 그게…</span></div>
+      <div class="q hot" data-hot="commitment">❓ 교수님: 설문 6명으로 결론 내기는 어렵지 않나요?<br><span style="color:#9ca3af">↳ 하은: …네</span></div>
+      <div class="q hot" data-hot="interdependence">❓ 교수님: 2번이랑 5번 숫자가 다른데 어느 게 맞아요?<br><span style="color:#9ca3af">↳ 지호·린이 서로를 쳐다봤다.</span></div>` },
+];
+// 단서: 틀린 곳은 아니지만 뒤에서 확인할 거리. 헛짚음으로 세지 않는다.
+const CLUES = {
+  cover: "표지 질문은 괜찮아. 발표가 끝까지 이 질문에 답했는지 마지막 슬라이드까지 보자.",
+  num2: "이 숫자는 지호가 D-4에 새로 센 맞는 숫자야. 뒤 슬라이드도 같은 숫자를 썼는지 보자.",
+};
+const DECOYS = {
+  "ok-src": "출처 표시는 괜찮다. 이 숫자를 다른 슬라이드도 똑같이 썼을까?",
+  "ok-cases": "사례 내용 자체는 괜찮다. 이 슬라이드의 '모양'을 다른 슬라이드와 비교해 보자.",
+};
+
+// 버그 4개: 증거 → 원인 메시지 → 조건
+const BUGS = {
+  purpose: {
+    evidence: "6번 결론(굿즈 공모전)이 1번 슬라이드의 질문(어떻게 줄일까?)에 답하지 않는다",
+    roots: ["P"],
+    near: Object.assign(
+      Object.fromEntries(["p1", "p2", "p3", "p4", "p5"].map((id) => [id, "의견이 갈리기 시작한 곳이야. 그 갈린 의견을 조장은 어떻게 처리했지?"])),
+      {
+        p8: "이건 결과야. 합쳐 보니 방향이 다 달랐다는데, 처음에 무슨 말 때문에 각자 달렸을까?",
+        p9: "굿즈 공모전 아이디어 자체가 문제는 아니야. 왜 아무 결론이나 나올 수 있었을까?",
+        p6: "이건 결과야. \"정한 적 없다\"는데, 처음에 무슨 말 때문에 정하지 않게 됐을까?",
+        p7: "이건 결과야. \"정한 적 없다\"는데, 처음에 무슨 말 때문에 정하지 않게 됐을까?",
+        p10: "결론을 이렇게 정한 건 맞아. 그런데 기준이 없었던 건 훨씬 전부터야. 첫 회의로 가 보자.",
+      }),
+    lecture: "팀은 존재하는 이유가 필요하다. 구성원이 \"우리는 왜 여기 있나?\"에 답할 수 있어야 한다. 리더는 팀의 비전을 전달하고, 구성원이 각자의 비전을 세우도록 돕는다.",
+    tip: "의견이 갈렸을 때 \"발표가 끝나면 누가 뭘 하게 되면 성공일까?\"를 한 문장으로 먼저 정했다면, D-1 결론 다툼은 그 문장 하나로 끝났다.",
+  },
+  rules: {
+    evidence: "3번만 다른 템플릿·글씨체, 5번에 수정 전 그래프, '최종' 파일이 3개",
+    roots: ["R"],
+    near: {
+      r1: "마감을 다르게 알고 있었던 건 증상이야. 그걸 보고 조장은 어떻게 하기로 했지?",
+      r2: "마감을 다르게 알고 있었던 건 증상이야. 그걸 보고 조장은 어떻게 하기로 했지?",
+      r3: "템플릿이 제각각인 게 처음 드러난 곳이야. 그다음 조장의 답을 보자.",
+      r4: "파일 이름 문제가 처음 드러난 곳이야. 그다음 조장의 답을 보자.",
+      x4: "고맙다고 했지만, 바로 앞 메시지 때문에 아무것도 정해지지 않았어.",
+      r5: "이건 결과야. 왜 템플릿이 섞였을까? D-8로 가 보자.",
+      r6: "이건 결과야. 왜 '최종'이 세 개나 생겼을까? D-8로 가 보자.",
+    },
+    lecture: "함께 일하는 방식이 예측 가능해야 한다. 팀에는 상호작용하고, 일을 해내고, 갈등을 해결하는 정해진 방식이 있다. 정해진 매뉴얼은 없고 팀 안에서 만들어지며, 위에서 내리는 지시에만 기대지 않게 해 주는 틀이다.",
+    tip: "\"마감 금 18시 / 드라이브 '3조' 폴더 / 템플릿 파일 하나 / 파일명 이름_슬라이드번호\"처럼 숫자와 장소로 정해 두었다면, 파일이 섞이지 않았다.",
+  },
+  commitment: {
+    evidence: "4번 설문 슬라이드: 응답 6명, 그래프 없음. 질의응답에서도 하은은 \"…네\"만 했다",
+    roots: ["C1", "C2"],
+    near: {
+      c1: "응답이 적은 건 문제의 시작일 뿐이야. 그 말을 들은 팀은 어떻게 반응했지?",
+      c2: "하은이 뭔가 말하려다 멈췄어. 바로 앞 메시지를 보자.",
+      c3: "하은은 더 모으겠다고 했지만 결국 6명 그대로였어. 왜 막혔다고 말하지 못했을까?",
+      c4: "이건 결과야. 왜 새벽에 혼자 올렸을까? D-6으로 가 보자.",
+      c5: "이건 결과야. 하은은 왜 도와 달라고 하지 못했을까? D-6으로 가 보자.",
+      c0: "중간 점검 자체는 좋은 시도야. 그 자리에서 무슨 말이 오갔지?",
+    },
+    lecture: "헌신은 동기부여와 연결된다. 구성원은 두려움이나 위협 속에서 힘들게 일하는 대신, 동기부여된 분위기 속에서 해야 할 일을 기꺼이 맡고 팀의 목적을 끝까지 함께 이룬다.",
+    tip: "\"무임승차\" 대신 \"어디서 막혔어? 설문 링크 같이 돌리자\"였다면, 하은은 D-6에 바로 \"돌릴 데가 없어요\"라고 말했을 것이다.",
+  },
+  interdependence: {
+    evidence: "5번은 하루 800개 기준으로 계산했다. 앞의 2번에서는 3,000개라고 했는데",
+    roots: ["I1", "I2"],
+    near: {
+      i1: "숫자를 바꾼 건 문제가 아니야. 바뀐 걸 알아챈 다음에 무슨 말이 나왔지?",
+      i2: "알아챈 건 좋았어. 바로 그다음 말을 보자.",
+      i3: "린이 읽고 아무 말도 안 했어. 린 대신 누가, 뭐라고 했지?",
+      i4: "이건 결과야. 린은 왜 몰랐을까? D-4로 가 보자.",
+      i5: "이것도 파트를 끊는 말이야. 그런데 숫자가 어긋난 건 그 전에 시작됐어.",
+      x7: "바로 앞 메시지에 동의한 거야. 그 앞을 보자.",
+    },
+    lecture: "대부분의 모임에서 사람들은 자기와 자기 일만 챙긴다. 팀에서는 팀 전체가 함께 성공하거나 실패하고, 혼자 이기는 팀원은 없다. 자기 일뿐 아니라 다른 사람과 어떻게 일하는지, 동료가 어떻게 하고 있는지도 살펴야 한다.",
+    tip: "\"숫자 바꾼 사람이 그 숫자 쓰는 사람한테 바로 말하기, 내일 밤 슬라이드 같이 넘겨 보기\"였다면, 2번과 5번은 D-3에 맞춰졌다.",
+  },
+};
+const ORDER = ["purpose", "commitment", "rules", "interdependence"];
+
+// 다 풀면 보여 주는, 조건 사이의 연결
+const CROSS = [
+  { text: "D-6 하은이 \"무임승차\" 소리를 듣고 웃음거리가 됨 → D-4 린도 숫자가 다른 걸 알면서 묻지 못함 → D-2 \"어느 숫자로 바꿔야 하는지 몰라서요\"", conds: ["commitment", "interdependence"] },
+  { text: "D-8 규칙 없이 \"내가 합칠게\" → D-2 템플릿 섞임 → 발표 3분 전까지 최신 파일 찾기", conds: ["rules"] },
+  { text: "D-10 목적을 정하지 않음 → D-2 \"결론 뭐로 해?\" → D-1 \"정한 적 없지 않나?\" → 질문과 상관없는 결론", conds: ["purpose"] },
+];
+
+/* =========================================================
+   상태
+   ========================================================= */
+const state = { started: false, t0: 0, timer: null, miss: 0, solved: {}, pending: null, step: "find", slide: 0, playing: null, hint: false };
+const $ = (id) => document.getElementById(id);
+function el(tag, cls, html) { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2800); }
+function fmt(s) { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }
+function miss() { state.miss++; $("miss").textContent = state.miss; }
+function dayOf(id) { let d = ""; for (const l of LOG) { if (l.day) d = l.day.split(" ")[0]; if (l.id === id) return d; } }
+
+function tab(name) {
+  if (typeof isDesk === "function" && isDesk()) {
+    const v = $("view-" + name); v.classList.remove("flash"); void v.offsetWidth; v.classList.add("flash"); return;
+  }
+  document.querySelectorAll("nav.tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v.id === "view-" + name));
+  $("main").scrollTop = 0;
+}
+document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => tab(b.dataset.tab)));
+
+function renderFound() {
+  $("found").innerHTML = "";
+  ORDER.forEach((k, i) => {
+    const s = el("span", state.solved[k] ? "on" : "", state.solved[k] ? CONDITIONS[k].name : `버그 ${i + 1}`);
+    if (state.solved[k]) s.style.background = CONDITIONS[k].color;
+    $("found").append(s);
+  });
+}
+
+/* ---------- 발표 PPT ---------- */
+function slideHTML(s) {
+  if (s.kind === "cover") return `<div class="sv cover" id="sv">${s.html}<span class="who">${s.who}</span></div>`;
+  if (s.kind === "qa") return `<div class="sv qa" id="sv"><div class="hd">${s.hd}</div><div class="bd">${s.html}</div></div>`;
+  const hd = `<div class="hd${s.hdHot ? " hot" : ""}"${s.hdHot ? ` data-hot="${s.hdHot}"` : ""}>${s.hd}</div>`;
+  return `<div class="sv tpl-${s.tpl || "a"}" id="sv"${s.bodyHot ? ` data-hot="${s.bodyHot}"` : ""}>${hd}<div class="bd">${s.html}</div><span class="who">${s.who}</span></div>`;
+}
+function renderResult() {
+  const v = $("view-result"); v.innerHTML = "";
+  v.append(el("div", "desk-h", "📽 발표 PPT <span>이상한 곳을 눌러 보세요</span>"));
+  const file = el("div", "file hot", "📁 제출 폴더: " + FILES.map((f) => `<span class="f">${f}</span>`).join(""));
+  file.dataset.hot = "rules"; v.append(file);
+  const s = SLIDES[state.slide];
+  const wrap = el("div", "fitbox", slideHTML(s)); wrap.id = "svbox"; v.append(wrap);
+  v.append(el("div", "speech", s.kind === "qa" ? "🎤 <b>질의응답</b>" : `🎤 <b>${s.who}</b>: "${s.say}"`));
+  const ctr = el("div", "controls");
+  ctr.innerHTML = `<button type="button" id="prev">◀</button><button type="button" id="play">${state.playing ? "⏸ 정지" : "▶ 발표 재생"}</button>
+    <div class="scene-no">${state.slide + 1} / ${SLIDES.length}</div><button type="button" id="next">▶▶</button>`;
+  v.append(ctr);
+  const th = el("div", "thumbs");
+  SLIDES.forEach((x, i) => { const b = el("button", null, x.kind === "qa" ? "Q&A" : String(i + 1)); b.type = "button"; b.setAttribute("aria-current", String(i === state.slide)); b.onclick = () => go(i); th.append(b); });
+  v.append(th);
+  v.append(el("p", "tip", "3조가 실제로 한 발표입니다. 이상한 곳을 눌러 보세요. 슬라이드 내용, 모양, 질의응답, 제출 파일 어디에든 문제가 있을 수 있어요."));
+  $("prev").onclick = () => go(state.slide - 1);
+  $("next").onclick = () => go(state.slide + 1);
+  $("play").onclick = togglePlay;
+  // 단서 표시
+  v.querySelectorAll("[data-hot]").forEach((n) => {
+    const k = n.dataset.hot;
+    if (n.id !== "sv") n.classList.add("hot");
+    if (state.solved[k]) n.classList.add("solved");
+  });
+  v.classList.toggle("hint-on", state.hint);
+  // 클릭: 가장 안쪽의 data-hot을 쓴다
+  $("sv").onclick = (ev) => {
+    const n = ev.target.closest("[data-hot]");
+    if (!n) { toast("여기는 이상 없어 보인다. 내용, 숫자, 슬라이드 모양을 살펴보자."); return; }
+    spot(n.dataset.hot);
+  };
+  file.onclick = () => spot("rules");
+  fitSlide();
+}
+const SLIDE_BASE = 440;
+const isDesk = () => matchMedia("(min-width: 1024px)").matches;
+function fitSlide() {
+  const box = $("svbox"); const sv = $("sv"); if (!box || !sv) return;
+  // 데스크톱에서는 칸 높이 안에 컨트롤까지 보이도록 슬라이드 크기를 제한한다
+  let w = box.parentElement.clientWidth - (isDesk() ? 40 : 0);
+  if (isDesk()) w = Math.min(w, ($("view-result").clientHeight - 210) * 16 / 9);
+  w = Math.max(w, 280);
+  box.style.width = w + "px";
+  const scale = w / SLIDE_BASE;
+  sv.style.transform = `scale(${scale})`;
+  box.style.height = (SLIDE_BASE * 9 / 16) * scale + "px";
+}
+new ResizeObserver(fitSlide).observe(document.getElementById("view-result"));
+
+function go(i) { state.slide = (i + SLIDES.length) % SLIDES.length; renderResult(); }
+function togglePlay() {
+  if (state.playing) { clearInterval(state.playing); state.playing = null; renderResult(); return; }
+  state.playing = setInterval(() => {
+    if (state.slide === SLIDES.length - 1) { clearInterval(state.playing); state.playing = null; renderResult(); return; }
+    go(state.slide + 1);
+  }, 3000);
+  renderResult();
+}
+
+/* ---------- 단톡방 기록 ---------- */
+function isRoot(id) { return Object.entries(BUGS).some(([k, b]) => state.solved[k] && b.roots.includes(id)); }
+function renderLog() {
+  const v = $("view-log"); v.innerHTML = "";
+  v.append(el("div", "desk-h", `💬 단톡방 기록 <span>${state.step === "trace" ? "문제가 시작된 메시지를 누르세요" : "버그를 찾으면 여기서 원인을 찾아요"}</span>`));
+  const log = el("div", "log");
+  for (const line of LOG) {
+    if (line.day) { const d = el("div", "day"); d.append(el("span", null, line.day)); log.append(d); continue; }
+    if (line.sys) { const s = el("div", "sys" + (isRoot(line.id) ? " root" : ""), line.sys); s.onclick = () => pick(line.id, s); log.append(s); continue; }
+    const m = MEMBERS[line.from];
+    const row = el("div", "m" + (line.from === "me" ? " mine" : ""));
+    const bb = el("div", "bb" + (isRoot(line.id) ? " root" : ""), line.text);
+    bb.onclick = () => pick(line.id, bb);
+    const col = el("div"); const nm = el("div", "nm", m.name);
+    if (line.from === "me") { nm.style.textAlign = "right"; col.append(nm, bb); row.append(col); }
+    else { const av = el("div", "av", m.name[0]); av.style.background = m.color; col.append(nm, bb); row.append(av, col); }
+    log.append(row);
+  }
+  v.append(log);
+  document.body.classList.toggle("tracing", state.step === "trace");
+}
+
+/* ---------- 사건 파일 ---------- */
+function renderCase() {
+  const v = $("view-case"); v.innerHTML = "";
+  v.append(el("div", "desk-h", `📋 사건 파일 <span>${Object.keys(state.solved).length} / 4</span>`));
+  const keys = ORDER.filter((k) => state.solved[k]);
+  if (!keys.length) { v.append(el("div", "empty-case", "아직 해결한 버그가 없습니다.<br>발표 PPT에서 이상한 곳을 찾아보세요.")); return; }
+  for (const k of keys) {
+    const b = BUGS[k]; const c = CONDITIONS[k];
+    const roots = b.roots.map((id) => LOG.find((l) => l.id === id));
+    const card = el("div", "case"); card.style.borderLeftColor = c.color;
+    card.innerHTML = `<h3 style="color:${c.color}">${c.name} · 9주차 ${c.page}쪽</h3>
+      <div class="chain">
+        ${roots.map((r) => `<div>💬 ${dayOf(r.id)} ${MEMBERS[r.from].name}: "${r.text}"</div>`).join('<div class="arr">그리고</div>')}
+        <div class="arr">↓ 이 말 때문에</div>
+        <div>📽 ${b.evidence}</div>
+      </div>
+      <p><b>강의에서는</b> ${b.lecture}</p>
+      <p><b>이렇게 했다면</b> ${b.tip}</p>`;
+    v.append(card);
+  }
+}
+
+/* ---------- 진행 ---------- */
+function setPrompt(html, actions = []) {
+  $("prompt").innerHTML = html; const a = $("actions"); a.innerHTML = "";
+  if (actions.length) { const r = el("div", "row"); actions.forEach((x) => r.append(x)); a.append(r); }
+}
+function btn(text, fn, primary) { const b = el("button", "btn" + (primary ? " primary" : ""), text); b.type = "button"; b.onclick = fn; return b; }
+
+function promptFind() {
+  state.step = "find"; state.pending = null; document.body.classList.remove("tracing");
+  const left = ORDER.length - Object.keys(state.solved).length;
+  setPrompt(`📽 발표 PPT에서 <b>이상한 곳</b>을 찾아 누르세요. (남은 버그 ${left}개)`, [
+    btn(state.hint ? "힌트 끄기" : "💡 힌트: 누를 수 있는 곳 보기", () => { state.hint = !state.hint; renderResult(); promptFind(); }),
+  ]);
+}
+function spot(key) {
+  if (!state.started) return;
+  if (state.step !== "find") { toast("먼저 지금 버그의 원인을 찾아 주세요."); return; }
+  if (CLUES[key]) { toast("🔎 " + CLUES[key]); return; }
+  if (DECOYS[key]) { toast(DECOYS[key]); miss(); return; }
+  if (state.solved[key]) { toast("이미 해결한 버그예요. 사건 파일에서 볼 수 있어요."); return; }
+  state.pending = key; state.step = "trace";
+  if (state.playing) togglePlay();
+  setPrompt(`🐞 <b>버그 발견!</b> ${BUGS[key].evidence}<br>💬 이 문제가 <b>시작된 메시지</b>를 단톡방 기록에서 찾아 누르세요.`, [
+    btn("발표 다시 보기", () => tab("result")), btn("단톡방 기록 열기", () => tab("log"), true),
+  ]);
+  renderLog();
+  const t = document.querySelector('[data-tab="log"]'); t.classList.remove("pulse"); void t.offsetWidth; t.classList.add("pulse");
+}
+function pick(id, node) {
+  if (state.step !== "trace") { if (state.started && state.step === "find") toast("먼저 발표 PPT에서 버그를 찾아 주세요."); return; }
+  const bug = BUGS[state.pending];
+  if (bug.roots.includes(id)) { node.classList.add("root"); state.step = "cond"; promptCond(id); return; }
+  miss(); node.classList.remove("nope"); void node.offsetWidth; node.classList.add("nope");
+  toast(bug.near[id] || "이 메시지는 이 버그와 관계가 적어 보여요.");
+}
+function promptCond(rootId) {
+  const r = LOG.find((l) => l.id === rootId);
+  setPrompt(`✅ 찾았다! ${MEMBERS[r.from].name}: "${r.text}"<br>이 말 때문에 무너진 <b>팀의 조건</b>은?`);
+  const g = el("div", "conds");
+  ORDER.forEach((k) => {
+    const c = CONDITIONS[k];
+    const b = el("button", null, `${c.name}<small>9주차 ${c.page}쪽</small>`); b.type = "button";
+    b.style.borderLeft = `4px solid ${c.color}`; b.onclick = () => answer(k); g.append(b);
+  });
+  $("actions").append(g);
+}
+const HINTS = {
+  purpose: "발표가 '누구에게 무엇을 하자는 것인지' 처음부터 정해지지 않았다는 점을 생각해 보자.",
+  commitment: "하은이 막힌 걸 말하지 못하게 된 분위기를 생각해 보자.",
+  rules: "마감·저장 위치·템플릿 같은 '일하는 방식'을 생각해 보자.",
+  interdependence: "각자 일은 했는데 서로의 파트를 확인하지 않았다는 점을 생각해 보자.",
+};
+function answer(k) {
+  const key = state.pending;
+  if (k !== key) { miss(); toast(HINTS[key]); return; }
+  state.solved[key] = true;
+  renderFound(); renderResult(); renderLog(); renderCase();
+  const c = CONDITIONS[key]; const done = Object.keys(state.solved).length === ORDER.length;
+  setPrompt(`🎉 <b style="color:${c.color}">${c.name}</b>이 무너진 버그를 해결했어요. 사건 파일에 기록했습니다.`, [
+    btn("사건 파일 보기", () => tab("case")),
+    btn(done ? "최종 보고서" : "다음 버그 찾기", () => { if (done) finish(); else { tab("result"); promptFind(); } }, true),
+  ]);
+}
+
+/* ---------- 시작 / 끝 ---------- */
+function intro() {
+  const o = el("div", "overlay"); o.id = "overlay";
+  o.innerHTML = `
+    <h2>🔍 팀 디버거</h2>
+    <p>3조 5명이 열흘 동안 준비한 발표 <b>"일회용 컵, 우리 캠퍼스에서 줄일 수 있을까?"</b>가 끝났다. 그런데 발표가 엉망이었다.</p>
+    <p><b>당신의 임무</b></p>
+    <ol>
+      <li>📽 <b>발표 PPT</b>에서 이상한 곳을 찾는다.</li>
+      <li>💬 <b>단톡방 기록</b>에서 그 문제가 <b>시작된 메시지</b>를 찾는다.</li>
+      <li>🧩 그 말 때문에 무너진 <b>팀의 조건</b>을 고른다.</li>
+    </ol>
+    <p>버그는 4개. 9주차에서 배운 팀의 네 조건(공동 목적·헌신·운영 규칙·상호의존성)이 하나씩, 서로 다른 슬라이드에 숨어 있다. 헛짚으면 기록이 남으니 신중하게!</p>
+    <p class="muted">3조와 조원, 슬라이드 속 수치는 모두 가상입니다.</p>`;
+  $("stage").append(o);
+  setPrompt("준비되면 시작하세요. 시간이 기록됩니다.", [btn("수사 시작", start, true)]);
+}
+function start() {
+  $("overlay")?.remove(); state.started = true; state.t0 = Date.now();
+  state.timer = setInterval(() => { $("time").textContent = fmt(Math.floor((Date.now() - state.t0) / 1000)); }, 500);
+  tab("result"); promptFind();
+}
+function finish() {
+  $("toast").classList.remove("show");
+  clearInterval(state.timer); if (state.playing) togglePlay();
+  const secs = Math.floor((Date.now() - state.t0) / 1000);
+  const o = el("div", "overlay"); o.id = "overlay";
+  o.innerHTML = `
+    <h2>📋 최종 보고서</h2>
+    <div class="bigstat"><div><b>${fmt(secs)}</b>걸린 시간</div><div><b>${state.miss}</b>헛짚음</div><div><b>4/4</b>버그</div></div>
+    <p>3조는 게으른 조가 아니었다. 5명 모두 자기 슬라이드는 만들었다. 무너진 건 <b>함께 일하는 조건</b>이었다.</p>
+    <h3>원인은 조장 한 사람이 아니었다</h3>
+    <p>목적과 규칙은 조장의 말에서 시작됐다. 헌신은 지호의 "무임승차" 농담과 거기 맞장구친 조장의 말에서, 상호의존성은 도윤의 "각자 파트니까"와 조장의 "각자 책임"에서 시작됐다. 팀의 조건은 모두가 함께 만들고, 함께 무너뜨린다.</p>
+    <h3>버그는 따로따로가 아니었다</h3>
+    <ul class="links">${CROSS.map((c) => `<li>${c.text}<br><span class="muted">${c.conds.map((k) => CONDITIONS[k].name).join(" → ")}</span></li>`).join("")}</ul>
+    <p>모든 모임이 팀은 아니다. 팀은 단순히 지시를 따르는 사람들의 모임이 아니라, 개인의 이익을 넘어 함께 무언가를 이루는 집단이다. <span class="muted">(9주차 6쪽)</span></p>
+    <p class="muted">기록: ${fmt(secs)} · 헛짚음 ${state.miss}회. 다른 조와 비교해 보세요.</p>`;
+  $("stage").append(o);
+  setPrompt("수사 완료! 사건 파일 탭에서 버그별 원인을 다시 볼 수 있어요.", [
+    btn("사건 파일 보기", () => { $("overlay")?.remove(); tab("case"); }), btn("처음부터 다시", reset, true),
+  ]);
+}
+function reset() {
+  clearInterval(state.timer); if (state.playing) togglePlay();
+  Object.assign(state, { started: false, miss: 0, solved: {}, pending: null, step: "find", slide: 0, hint: false });
+  $("time").textContent = "0:00"; $("miss").textContent = "0"; $("overlay")?.remove();
+  renderAll(); intro();
+}
+document.addEventListener("keydown", (e) => {
+  if (!state.started || $("overlay")) return;
+  if (e.key === "ArrowRight") go(state.slide + 1);
+  if (e.key === "ArrowLeft") go(state.slide - 1);
+});
+function renderAll() { renderFound(); renderResult(); renderLog(); renderCase(); }
+renderAll();
+intro();
+</script>
+</body>
+</html>

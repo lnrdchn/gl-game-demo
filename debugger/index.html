@@ -228,7 +228,7 @@
     <div class="hrow">
       <h1>🔍 팀 디버거<span class="sub-h"> · 3조 사건</span></h1>
       <a class="home" href="../index.html">처음으로</a>
-      <div class="stats"><span>⏱ <b id="time">0:00</b></span><span>헛짚음 <b id="miss">0</b></span><span>증거 <b id="evc">0/10</b></span></div>
+      <div class="stats"><span>⏱ <b id="time">0:00</b></span><span>헛짚음 <b id="miss">0</b></span><span>증거 <b id="evc">0/9</b></span></div>
     </div>
     <div class="found" id="found"></div>
   </header>
@@ -309,7 +309,7 @@ const LOG = [
   { day: "D-2 · 합쳐 보는 날" },
   { id: "x8", sys: "슬라이드를 처음으로 한 파일에 합쳤다." },
   { id: "p8", from: "jiho",  text: "합쳐 보니까 내 건 정보 전달, 하은 건 설문, 도윤 건 제안이네 ㅋㅋ 결론 뭐로 해?" },
-  { id: "r5", from: "doyun", text: "템플릿 두 개 섞여 있음 ㅋㅋ 그래프도 수정 전 버전 들어간 듯" },
+  { id: "r5", from: "doyun", text: "템플릿 두 개 섞여 있음 ㅋㅋ 파일도 드라이브, 노션, 단톡에 다 흩어져 있어서 뭐가 최신인지 모르겠다" },
   { id: "c4", sys: "하은 님이 새벽 2시에 파일을 올렸습니다: 하은_설문.pptx" },
   { id: "c5", from: "haeun", text: "응답은 6명 그대로예요. 그래프는 시간이 없어서…" },
   { id: "i4", from: "rin",   text: "…저 아직 800개로 되어 있어요. 어느 숫자로 바꿔야 하는지 몰라서요" },
@@ -340,7 +340,7 @@ const SLIDES = [
   { who: "하은", hd: "설문: 왜 텀블러를 안 쓸까?", say: "응답이… 6명이라서요. 그래프는 아직…",
     html: `<p class="hot" data-hot="e-c4" style="display:inline-block;margin:0;padding:0 4px">응답 6명</p><div class="ph hot" data-hot="e-c4">그래프 준비 중…</div>` },
   { who: "린", hd: "제안하면 얼마나 줄까?", say: "하루 800개 중 30%, 240개를 줄일 수 있습니다.",
-    html: `<div class="calc hot" data-hot="e-i5">하루 800개 × 30% = <b>240개</b> 절감</div><br><span class="src">할인 제도 참여율 30% 가정 (가상)</span><span class="stamp hot" data-hot="e-r5">수정 전 그래프 v1</span>` },
+    html: `<div class="calc hot" data-hot="e-i5">하루 800개 × 30% = <b>240개</b> 절감</div><br><span class="src">할인 제도 참여율 30% 가정 (가상)</span>` },
   { who: "민준", hd: "결론: 텀블러 굿즈 디자인 공모전을 열자!", hdHot: "e-p6", say: "그래서 저희는 굿즈 공모전을 제안합니다!",
     html: `<p class="hot" data-hot="e-p6" style="display:inline-block;padding:0 4px">재밌고 참여도 높을 것 같습니다 🎨</p>` },
   { who: "질의응답", kind: "qa", hd: "질의응답", say: "",
@@ -362,7 +362,6 @@ const EVIDENCE = {
   "e-cqa":   { cond: "commitment",      label: "질의응답: 설문 질문에 하은은 \"…네\"만 했다" },
   "e-rfile": { cond: "rules",           label: "제출 폴더에 '최종' 파일이 3개" },
   "e-r3":    { cond: "rules",           label: "3번만 다른 템플릿과 글씨체" },
-  "e-r5":    { cond: "rules",           label: "5번에 수정 전 그래프(v1)가 들어갔다" },
   "e-rqa":   { cond: "rules",           label: "발표 시작 전, 3분 동안 최신 파일을 찾았다" },
   "e-i5":    { cond: "interdependence", label: "5번은 800개 기준으로 계산했다 (앞의 2번은 3,000개)" },
   "e-iqa":   { cond: "interdependence", label: "질의응답: \"2번이랑 5번 숫자가 다른데 어느 게 맞아요?\"" },
@@ -393,7 +392,7 @@ const BUGS = {
     tip: "의견이 갈렸을 때 \"발표가 끝나면 누가 뭘 하게 되면 성공일까?\"를 한 문장으로 먼저 정했다면, D-1 결론 다툼은 그 문장 하나로 끝났다.",
   },
   rules: {
-    evidence: "3번만 다른 템플릿·글씨체, 5번에 수정 전 그래프, '최종' 파일이 3개",
+    evidence: "3번만 다른 템플릿·글씨체, '최종' 파일이 3개",
     roots: ["R"],
     near: {
       r1: "마감을 다르게 알고 있었던 건 증상이야. 그걸 보고 조장은 어떻게 하기로 했지?",
@@ -401,7 +400,7 @@ const BUGS = {
       r3: "템플릿이 제각각인 게 처음 드러난 곳이야. 그다음 조장의 답을 보자.",
       r4: "파일 이름 문제가 처음 드러난 곳이야. 그다음 조장의 답을 보자.",
       x4: "고맙다고 했지만, 바로 앞 메시지 때문에 아무것도 정해지지 않았어.",
-      r5: "이건 결과야. 왜 템플릿이 섞였을까? D-8로 가 보자.",
+      r5: "이건 결과야. 파일이 왜 드라이브, 노션, 단톡에 흩어졌을까? 그렇게 하라고 한 말이 D-8에 있어.",
       r6: "이건 결과야. 왜 '최종'이 세 개나 생겼을까? D-8로 가 보자.",
     },
     lecture: "함께 일하는 방식이 예측 가능해야 한다. 팀에는 상호작용하고, 일을 해내고, 갈등을 해결하는 정해진 방식이 있다. 정해진 매뉴얼은 없고 팀 안에서 만들어지며, 위에서 내리는 지시에만 기대지 않게 해 주는 틀이다.",

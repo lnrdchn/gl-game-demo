@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>3조의 열흘: 우리는 팀이 될 수 있을까?</title>
+<title>조장 시뮬레이터 · 모임이 아닌, "팀"</title>
 <style>
   :root {
     --bg: #b9cbdc; --panel: #ffffff; --ink: #1f2933; --muted: #6b7785; --mine: #ffe14d; --line: #d7dee6;
@@ -191,13 +191,66 @@
   @keyframes bump { 40% { transform: scale(1.03); } }
   .legend2 { font-size: 12px; color: #55627d; line-height: 1.5; margin-top: 4px; }
   @media (prefers-reduced-motion: reduce) { .pc.bump { animation: none; } * { transition: none !important; } }
+
+  /* ===== 공통 테마 (세 페이지 동일): 흰 바탕, 남색 글자, 노란 형광펜 하나 ===== */
+  :root { --bg: #d6e0eb; --ink: #1b2a4a; --muted: #5b6680; --line: #d9dee8; --page: #f3f5f9; --tint: #eef1f6; --mark: #ffe14d; --mark-edge: #e6c200; }
+  body { background: var(--page); color: var(--ink); }
+  .sitebar { display: none; }
+  .day span { background: rgba(27, 42, 74, .35); }
+  .primary { background: var(--ink); }
+  .choice:hover, .choice:focus-visible { background: #fff6c2; border-color: var(--mark-edge); }
+  .card { border: 1px solid var(--line); }
+  .deck { background: var(--tint); color: var(--ink); border: 1px solid var(--line); }
+  .filebar { color: var(--muted); }
+  .filebar.bad { color: #b91c1c; }
+  .sv { box-shadow: 0 0 0 1px var(--line); }
+  .speech { color: var(--ink); }
+  .speech b { color: var(--ink); background: linear-gradient(transparent 55%, var(--mark) 55%); }
+  .dctl button { background: #fff; color: var(--ink); border-color: var(--line); }
+  .dctl .n { color: var(--muted); }
+  .dthumbs button { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+  .dthumbs button[aria-current="true"] { border: 2px solid var(--ink); }
+  .modal { background: rgba(27, 42, 74, .55); }
+  .modal .deck { background: #fff; }
+  .mbar { color: #fff; }
+  .mbar button { background: #fff; color: var(--ink); border-color: #fff; }
+  .side .about, .tl .lab, .pc .pg, .pc p, .legend2, .side .home { color: var(--muted); }
+  .tl::before { background: var(--line); }
+  .tl .dot { background: var(--page); border-color: var(--line); }
+  .tl li.now .dot { box-shadow: 0 0 0 4px var(--mark); }
+  .tl .said, .pc { border-color: var(--line); }
+  .pc .today { background: var(--mark); }
+  .bigview { border-color: var(--ink); color: var(--ink); }
+  .sitebar .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px; text-decoration: none; color: var(--ink); letter-spacing: -0.01em; }
+  .sitebar .dots { display: inline-grid; grid-template-columns: repeat(2, 7px); gap: 3px; }
+  .sitebar .dots i { width: 7px; height: 7px; border-radius: 2px; display: block; }
+  .sitebar nav { display: flex; gap: 4px; }
+  .sitebar nav a { font-size: 14px; text-decoration: none; color: var(--muted); padding: 6px 12px; border-radius: 8px; }
+  .sitebar nav a:hover { background: var(--tint); color: var(--ink); }
+  .sitebar nav a[aria-current="page"] { color: var(--ink); font-weight: 700; background: var(--tint); }
+  .room h1 { white-space: nowrap; }
+  @media (max-width: 480px) { .room h1 { font-size: 15px; } .tools button[data-speed="1.6"] { display: none; } }
+  @media (min-width: 1080px) {
+    body { flex-direction: column; align-items: stretch; height: 100vh; height: 100dvh; overflow: hidden; }
+    .sitebar { height: 56px; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: #fff; border-bottom: 1px solid var(--line); }
+    .layout { height: auto; flex: 1; min-height: 0; padding-top: 20px; }
+    .phone { box-shadow: 0 0 0 9px var(--ink), 0 30px 60px -28px rgba(27, 42, 74, .45); }
+    .side .home { display: none; }
+  }
 </style>
 </head>
 <body>
+<header class="sitebar">
+  <a class="brand" href="../index.html">
+    <span class="dots" aria-hidden="true"><i style="background:var(--purpose)"></i><i style="background:var(--commitment)"></i><i style="background:var(--rules)"></i><i style="background:var(--interdependence)"></i></span>
+    모임이 아닌, "팀"
+  </a>
+  <nav><a href="index.html" aria-current="page">조장 시뮬레이터</a><a href="../debugger/index.html">팀 디버거</a></nav>
+</header>
 <div class="layout">
 <aside class="side" aria-label="열흘 타임라인">
   <a class="home" href="../index.html">처음으로</a>
-  <h2>3조의 열흘</h2>
+  <h2>조장 시뮬레이터</h2>
   <p class="about">교양 수업 조별 발표 "일회용 컵, 우리 캠퍼스에서 줄일 수 있을까?"를 5명이 준비한다. 당신은 조장 민준.</p>
   <h3>열흘의 흐름</h3>
   <ol class="tl" id="timeline"></ol>
@@ -738,7 +791,7 @@ function showStart() {
   const plan = [["D-10", "purpose"], ["D-8", "rules"], ["D-6", "commitment"], ["D-4", "interdependence"]]
     .map(([d, k]) => `<span class="d">${d}</span><span style="color:${CONDITIONS[k].color}"><b>${CONDITIONS[k].name}</b> 시험 · 9주차 ${CONDITIONS[k].page}쪽</span>`).join("");
   card.innerHTML = `
-    <h2>3조의 열흘</h2>
+    <h2>조장 시뮬레이터</h2>
     <p>당신은 3조 조장 <b>민준</b>입니다. 5명이 열흘 안에 15분짜리 발표 PPT를 만들어야 합니다. 주제는 <b>"일회용 컵, 우리 캠퍼스에서 줄일 수 있을까?"</b></p>
     <p>날마다 팀의 조건 하나가 시험대에 오릅니다.</p>
     <div class="plan">${plan}<span class="d">D-2·D-1</span><span>그때 고른 말이 <b>돌아옵니다</b></span></div>
@@ -987,6 +1040,11 @@ document.getElementById("gaugeToggle").addEventListener("click", (ev) => {
   ev.currentTarget.setAttribute("aria-pressed", String(on));
   $gauges.classList.toggle("show", on);
 });
+// claude.ai 미리보기처럼 사이트 밖에서 열면 다른 페이지로 가는 링크를 숨긴다
+if (location.protocol !== "file:" && !location.hostname.endsWith("github.io")) {
+  document.querySelectorAll(".home, .sitebar nav").forEach((a) => (a.style.display = "none"));
+  document.querySelector(".sitebar .brand").removeAttribute("href");
+}
 showStart();
 </script>
 </body>

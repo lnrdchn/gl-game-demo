@@ -3,236 +3,178 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>3조의 열흘 · 팀이 되는 네 가지 조건</title>
-<meta name="description" content="9주차 Building a Team의 네 조건(공동 목적, 헌신, 운영 규칙, 상호의존성)을 가상의 3조 이야기로 직접 겪어 보는 데모">
+<title>모임이 아닌, "팀"</title>
+<meta name="description" content="Game demo for a team project, 2026 Fall Global Leadership course: the four conditions of a team (Week 9, Building a Team)">
 <style>
+  /* ===== 공통 토큰 (세 페이지 동일) ===== */
   :root {
-    --page: #e7ebf5; --ink: #1b2a4a; --soft: #55627d; --line: #cfd6e6; --surface: #ffffff;
-    --kakao: #ffe14d; --chat: #b9cbdc;
+    --page: #f3f5f9; --surface: #ffffff; --ink: #1b2a4a; --muted: #5b6680; --line: #d9dee8; --tint: #eef1f6;
+    --mark: #ffe14d; --mark-edge: #e6c200; --chat: #d6e0eb;
     --purpose: #3b82f6; --commitment: #ef6c4a; --rules: #8b5cf6; --interdependence: #10a37f;
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
-  body { margin: 0; background: var(--page); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; line-height: 1.6; }
+  body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--page); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; line-height: 1.6; }
   a { color: inherit; }
   :focus-visible { outline: 3px solid var(--purpose); outline-offset: 3px; border-radius: 6px; }
-  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 28px; }
 
-  header.top { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
-  .brand { font-weight: 800; font-size: 17px; letter-spacing: -0.01em; text-decoration: none; display: flex; align-items: center; gap: 10px; }
-  .dots { display: inline-grid; grid-template-columns: repeat(2, 8px); gap: 3px; }
-  .dots i { width: 8px; height: 8px; border-radius: 2px; display: block; }
-  header.top nav a { font-size: 14px; color: var(--soft); text-decoration: none; margin-left: 18px; }
-  header.top nav a:hover { color: var(--ink); }
+  /* 공통 상단 바 */
+  .sitebar { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: var(--surface); border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px; text-decoration: none; letter-spacing: -0.01em; }
+  .dots { display: inline-grid; grid-template-columns: repeat(2, 7px); gap: 3px; }
+  .dots i { width: 7px; height: 7px; border-radius: 2px; display: block; }
+  .sitebar nav { display: flex; gap: 4px; }
+  .sitebar nav a { font-size: 14px; text-decoration: none; color: var(--muted); padding: 6px 12px; border-radius: 8px; }
+  .sitebar nav a:hover { background: var(--tint); color: var(--ink); }
+  .sitebar nav a[aria-current="page"] { color: var(--ink); font-weight: 700; background: var(--tint); }
 
-  /* 첫 화면 */
-  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 48px; align-items: center; padding: 36px 0 72px; }
-  .hero h1 { font-size: clamp(34px, 4.6vw, 56px); line-height: 1.18; letter-spacing: -0.035em; margin: 0 0 20px; font-weight: 800; word-break: keep-all; }
-  .hero p.lede { font-size: 18px; color: var(--soft); max-width: 30em; margin: 0 0 28px; word-break: keep-all; }
-  .cta { display: flex; gap: 10px; flex-wrap: wrap; }
-  .btn { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 16px; font-weight: 700; padding: 13px 20px; border-radius: 12px; text-decoration: none; border: 1.5px solid var(--ink); transition: transform .12s ease, box-shadow .12s ease; }
-  .btn.main { background: var(--kakao); border-color: var(--kakao); box-shadow: 0 2px 0 #d9b800; }
-  .btn.sub { background: transparent; }
-  .btn:hover { transform: translateY(-1px); }
-  .btn:active { transform: translateY(1px); box-shadow: none; }
+  main { flex: 1; width: 100%; max-width: 1180px; margin: 0 auto; padding: 56px 28px 40px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 56px; align-items: center; }
 
-  /* 말 한 줄 → 슬라이드 */
-  .switch { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 18px; box-shadow: 0 18px 40px -24px rgba(27,42,74,.45); }
-  .pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
-  .pill { font: inherit; font-size: 14px; font-weight: 700; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--soft); cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
-  .pill[aria-pressed="true"] { color: #fff; border-color: transparent; }
-  .pair { display: grid; grid-template-columns: minmax(0, 0.9fr) 28px minmax(0, 1.1fr); align-items: center; gap: 10px; }
-  .chatbox { background: var(--chat); border-radius: 14px; padding: 14px 12px; min-height: 170px; display: flex; flex-direction: column; justify-content: center; }
-  .chatbox .day { align-self: center; font-size: 11px; color: #fff; background: rgba(0,0,0,.2); padding: 2px 10px; border-radius: 999px; margin-bottom: 10px; }
-  .chatbox .who { font-size: 12px; color: #3d4a57; margin: 0 0 3px 2px; }
-  .chatbox .bb { background: #fff; border-radius: 4px 14px 14px 14px; padding: 9px 12px; font-size: 14px; line-height: 1.45; word-break: keep-all; }
-  .chatbox.mine { align-items: stretch; }
-  .chatbox.mine .who { text-align: right; }
-  .chatbox.mine .bb { background: var(--kakao); border-radius: 14px 4px 14px 14px; }
-  .arrow { height: 2px; background: var(--ink); position: relative; }
-  .arrow::after { content: ""; position: absolute; right: -2px; top: -5px; border: 6px solid transparent; border-left: 8px solid var(--ink); }
-  .slide { position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #fff; border: 1px solid var(--line); color: #111827; }
-  .slide .hd { height: 19%; display: flex; align-items: center; padding: 0 12px; font-size: 13px; font-weight: 800; color: #fff; background: #1d4ed8; }
-  .slide .bd { padding: 8px 12px; font-size: 12px; line-height: 1.45; }
-  .slide .no { position: absolute; right: 8px; bottom: 6px; font-size: 10px; color: #6b7280; }
-  .slide.tpl-b { background: #14532d; color: #f0fdf4; font-family: "Times New Roman", Georgia, serif; }
-  .slide.tpl-b .hd { background: transparent; color: #fef08a; font-style: italic; font-weight: 400; font-size: 15px; border-bottom: 1px solid #86efac; }
-  .slide.tpl-b .no { color: #bbf7d0; }
-  .slide .ph { margin-top: 6px; height: 46%; border: 2px dashed #9ca3af; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6b7280; }
-  .slide .calc { font-size: 15px; margin-top: 12px; }
-  .slide .calc b { font-size: 19px; color: #047857; }
-  .slide ul { margin: 2px 0; padding-left: 16px; }
-  .files { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: #b91c1c; margin-top: 6px; word-break: break-all; }
-  .verdict { margin-top: 14px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-size: 15px; }
-  .verdict b { font-size: 17px; }
-  .verdict span { color: var(--soft); font-size: 14px; }
-  .pair > * { transition: opacity .18s ease; }
-  .pair.swap > * { opacity: 0; }
+  /* 제목 */
+  h1 { font-size: clamp(44px, 6vw, 76px); line-height: 1.08; letter-spacing: -0.045em; margin: 0; font-weight: 800; }
+  h1 .q { background: linear-gradient(transparent 52%, var(--mark) 52%, var(--mark) 84%, transparent 84%); padding: 0 .06em; }
+  .en { font-size: 15px; color: var(--muted); margin: 10px 0 22px; }
+  .lede { font-size: 17px; max-width: 28em; margin: 0 0 30px; word-break: keep-all; }
 
   /* 두 가지 해 보기 */
-  section.ways { padding: 8px 0 72px; }
-  section h2 { font-size: 28px; letter-spacing: -0.02em; margin: 0 0 8px; }
-  section .intro { color: var(--soft); margin: 0 0 26px; max-width: 40em; }
-  .ways-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .way { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 26px; display: flex; flex-direction: column; }
-  .way.game { border-top: 6px solid var(--kakao); }
-  .way.debug { background: #17223b; color: #e5e7eb; border-color: #17223b; border-top: 6px solid #f59e0b; }
-  .way h3 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
-  .way .role { font-size: 15px; margin: 0 0 16px; opacity: .8; }
-  .way ol { margin: 0 0 22px; padding-left: 20px; }
-  .way li { margin: 6px 0; }
-  .way .foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-  .way .time { font-size: 14px; opacity: .75; }
-  .way.debug .btn { border-color: #f59e0b; background: #f59e0b; color: #111; box-shadow: 0 2px 0 #b45309; }
-  .way.game .btn { background: var(--kakao); border-color: var(--kakao); box-shadow: 0 2px 0 #d9b800; }
+  .ways { border-top: 1px solid var(--line); }
+  .way { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line); text-decoration: none; }
+  .way .name { font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
+  .way .what { font-size: 14px; color: var(--muted); grid-column: 1; }
+  .way .go { grid-row: 1 / span 2; grid-column: 2; font-size: 15px; font-weight: 700; padding: 10px 16px; border-radius: 10px; border: 1.5px solid var(--ink); background: var(--surface); transition: background .15s; white-space: nowrap; }
+  .way.primary .go { background: var(--mark); border-color: var(--mark-edge); }
+  .way:hover .go { background: var(--mark); border-color: var(--mark-edge); }
 
-  /* 네 조건 */
-  section.conds { padding: 0 0 72px; }
-  .cond-row { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 2px solid var(--ink); }
-  .cond { padding: 18px 18px 6px 0; }
-  .cond + .cond { padding-left: 18px; border-left: 1px solid var(--line); }
-  .cond .name { font-size: 19px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-  .cond .name i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
-  .cond .page { font-size: 13px; color: var(--soft); margin: 2px 0 8px; }
-  .cond p { margin: 0; font-size: 15px; word-break: keep-all; }
+  /* 말 한 줄 → 슬라이드 */
+  .switch { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+  .switch .ask { font-size: 14px; color: var(--muted); margin: 0 0 10px; }
+  .pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .pill { font: inherit; font-size: 14px; font-weight: 700; padding: 7px 13px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .pill i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+  .pill[aria-pressed="true"] { color: #fff; border-color: transparent; }
+  .pill[aria-pressed="true"] i { background: #fff !important; }
+  .stack { display: grid; gap: 10px; }
+  .pair > * { transition: opacity .18s ease; }
+  .pair.swap > * { opacity: 0; }
+  .chatbox { background: var(--chat); border-radius: 12px; padding: 12px; }
+  .chatbox .day { display: inline-block; font-size: 11px; color: #fff; background: rgba(27,42,74,.35); padding: 1px 9px; border-radius: 999px; margin-bottom: 8px; }
+  .chatbox .who { font-size: 12px; color: var(--muted); margin: 0 0 3px 2px; }
+  .chatbox .bb { display: inline-block; background: #fff; border-radius: 4px 12px 12px 12px; padding: 8px 11px; font-size: 14px; line-height: 1.45; word-break: keep-all; max-width: 92%; }
+  .chatbox.mine { text-align: right; }
+  .chatbox.mine .bb { background: var(--mark); border-radius: 12px 4px 12px 12px; text-align: left; }
+  .then { font-size: 12px; color: var(--muted); padding-left: 2px; }
+  .slide { position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #fff; border: 1px solid var(--line); color: #111827; }
+  .slide .hd { height: 19%; display: flex; align-items: center; padding: 0 14px; font-size: 14px; font-weight: 800; color: #fff; background: #1d4ed8; }
+  .slide .bd { padding: 10px 14px; font-size: 13px; line-height: 1.45; }
+  .slide .no { position: absolute; right: 8px; bottom: 6px; font-size: 10px; color: #6b7280; }
+  .slide.tpl-b { background: #14532d; color: #f0fdf4; font-family: "Times New Roman", Georgia, serif; }
+  .slide.tpl-b .hd { background: transparent; color: #fef08a; font-style: italic; font-weight: 400; font-size: 16px; border-bottom: 1px solid #86efac; }
+  .slide.tpl-b .no { color: #bbf7d0; }
+  .slide .ph { margin-top: 6px; height: 46%; border: 2px dashed #9ca3af; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6b7280; }
+  .slide .calc { font-size: 16px; margin-top: 14px; }
+  .slide .calc b { font-size: 20px; color: #047857; }
+  .slide ul { margin: 2px 0; padding-left: 16px; }
+  .files { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: #b91c1c; margin-top: 6px; word-break: break-all; }
+  .verdict { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+  .verdict b { display: block; font-size: 16px; }
 
-  footer { border-top: 1px solid var(--line); padding: 22px 0 40px; font-size: 13px; color: var(--soft); }
-  footer p { margin: 4px 0; }
+  footer { flex: 0 0 auto; text-align: center; font-size: 12px; color: var(--muted); padding: 0 20px 22px; }
 
-  @media (max-width: 900px) {
-    .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 12px; }
-    .ways-grid { grid-template-columns: 1fr; }
-    .cond-row { grid-template-columns: 1fr 1fr; }
-    .cond:nth-child(3) { border-left: 0; padding-left: 0; }
+  @media (max-width: 920px) {
+    main { grid-template-columns: 1fr; gap: 36px; padding-top: 32px; }
   }
   @media (max-width: 560px) {
-    .wrap { padding: 0 18px; }
-    .pair { grid-template-columns: 1fr; }
-    .arrow { width: 2px; height: 22px; margin: 0 auto; }
-    .arrow::after { right: -5px; top: auto; bottom: -4px; border: 6px solid transparent; border-top: 8px solid var(--ink); }
-    .cond-row { grid-template-columns: 1fr; }
-    .cond + .cond { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); }
-    header.top nav { display: none; }
+    .sitebar { padding: 0 16px; }
+    .sitebar nav { display: none; }
+    main { padding: 24px 18px 32px; }
+    .switch { padding: 16px; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <a class="brand" href="index.html">
-      <span class="dots" aria-hidden="true"><i style="background:var(--purpose)"></i><i style="background:var(--commitment)"></i><i style="background:var(--rules)"></i><i style="background:var(--interdependence)"></i></span>
-      3조의 열흘
-    </a>
-    <nav><a href="game/index.html">게임</a><a href="debugger/index.html">팀 디버거</a></nav>
-  </header>
+<header class="sitebar">
+  <a class="brand" href="index.html">
+    <span class="dots" aria-hidden="true"><i style="background:var(--purpose)"></i><i style="background:var(--commitment)"></i><i style="background:var(--rules)"></i><i style="background:var(--interdependence)"></i></span>
+    모임이 아닌, "팀"
+  </a>
+  <nav><a href="game/index.html">조장 시뮬레이터</a><a href="debugger/index.html">팀 디버거</a></nav>
+</header>
 
-  <section class="hero">
-    <div>
-      <h1>단톡방 한 줄이<br>발표 하나를 무너뜨린다</h1>
-      <p class="lede">5명이 열흘 동안 발표 PPT를 만든다. 다들 자기 슬라이드는 끝냈는데, 발표는 엉망이 됐다. 9주차에서 배운 팀의 네 조건으로 그 이유를 직접 찾아보자.</p>
-      <div class="cta">
-        <a class="btn main" href="game/index.html">조장이 되어 보기</a>
-        <a class="btn sub" href="debugger/index.html">무너진 발표 수사하기</a>
-      </div>
+<main>
+  <div>
+    <h1>모임이 아닌,<br><span class="q">"팀"</span></h1>
+    <p class="en">Not all groups are teams.</p>
+    <p class="lede">5명이 열흘 동안 발표 PPT를 만든다. 다들 자기 슬라이드는 끝냈는데 발표는 무너졌다. 9주차에서 배운 팀의 네 조건으로 그 이유를 직접 찾아보자.</p>
+    <div class="ways">
+      <a class="way primary" href="game/index.html">
+        <span class="name">조장 시뮬레이터</span>
+        <span class="what">조장이 되어 열흘 동안 단톡방에 답한다 · 약 5분</span>
+        <span class="go">시작하기</span>
+      </a>
+      <a class="way" href="debugger/index.html">
+        <span class="name">팀 디버거</span>
+        <span class="what">무너진 발표에서 원인이 된 메시지를 찾는다 · 약 4분</span>
+        <span class="go">수사하기</span>
+      </a>
     </div>
+  </div>
 
-    <div class="switch" aria-label="조건별로 무너진 슬라이드 보기">
-      <div class="pills" role="group" aria-label="조건 고르기" id="pills"></div>
-      <div class="pair" id="pair">
-        <div class="chatbox" id="chat"></div>
-        <div class="arrow" aria-hidden="true"></div>
-        <div id="slideBox"></div>
-      </div>
-      <div class="verdict" id="verdict"></div>
+  <section class="switch" aria-label="조건별로 무너진 슬라이드 보기">
+    <p class="ask">조건을 눌러 보세요. 단톡방 한 줄이 발표의 어디를 무너뜨렸을까?</p>
+    <div class="pills" role="group" aria-label="조건 고르기" id="pills"></div>
+    <div class="pair stack" id="pair">
+      <div class="chatbox" id="chat"></div>
+      <div class="then">그리고 발표 당일</div>
+      <div id="slideBox"></div>
     </div>
+    <div class="verdict" id="verdict"></div>
   </section>
+</main>
 
-  <section class="ways" id="ways">
-    <h2>두 가지 방법으로 해 보기</h2>
-    <p class="intro">같은 3조, 같은 열흘이다. 게임에서는 내가 고른 말이 발표를 바꾸고, 디버거에서는 이미 무너진 발표에서 거꾸로 원인을 찾는다.</p>
-    <div class="ways-grid">
-      <article class="way game">
-        <h3>3조의 열흘</h3>
-        <p class="role">내가 조장 민준이 되어 단톡방에 답한다</p>
-        <ol>
-          <li>날마다 팀의 조건 하나가 시험대에 오른다.</li>
-          <li>D-2와 D-1에 그때 고른 말이 돌아온다.</li>
-          <li>마지막에 3조의 발표를 재생하고, 어느 슬라이드가 왜 무너졌는지 본다.</li>
-        </ol>
-        <div class="foot"><span class="time">약 5분 · 엔딩 5가지</span><a class="btn" href="game/index.html">게임 시작</a></div>
-      </article>
-      <article class="way debug">
-        <h3>팀 디버거</h3>
-        <p class="role">무너진 발표를 보고 원인이 된 메시지를 찾는다</p>
-        <ol>
-          <li>발표 PPT에서 이상한 곳을 누른다.</li>
-          <li>단톡방 기록에서 그 문제가 시작된 메시지를 찾는다.</li>
-          <li>그 말 때문에 무너진 팀의 조건을 고른다.</li>
-        </ol>
-        <div class="foot"><span class="time">약 4분 · 시간과 헛짚음 기록</span><a class="btn" href="debugger/index.html">수사 시작</a></div>
-      </article>
-    </div>
-  </section>
-
-  <section class="conds">
-    <h2>팀이 되는 네 가지 조건</h2>
-    <p class="intro">모든 모임이 팀은 아니다. 팀은 지시를 따르는 사람들의 모임이 아니라, 개인의 이익을 넘어 함께 무언가를 이루는 집단이다. (9주차 6쪽)</p>
-    <div class="cond-row" id="condRow"></div>
-  </section>
-
-  <footer>
-    <p>글로벌시대의 리더십론 9주차 Building a Team 6–10쪽을 바탕으로 만든 교육용 데모입니다.</p>
-    <p>3조와 조원, 슬라이드 속 수치는 모두 가상입니다.</p>
-  </footer>
-</div>
+<footer>2026 Fall Global Leadership course · 9주차 Building a Team 6–10쪽 · 3조와 조원, 슬라이드 속 수치는 모두 가상입니다.</footer>
 
 <script>
 const CONDS = {
   purpose: {
     name: "공동 목적", page: 7, color: "var(--purpose)",
-    lecture: "팀은 존재하는 이유가 필요하다. 구성원이 \"우리는 왜 여기 있나?\"에 답할 수 있어야 한다.",
     day: "D-10 첫 회의", from: "민준(조장)", mine: true,
     text: "다 좋은 의견이네! 일단 각자 맡은 파트 조사해 오자. 합치면서 맞추면 돼",
     slide: `<div class="slide"><div class="hd">결론: 텀블러 굿즈 디자인 공모전을 열자!</div><div class="bd">재밌고 참여도 높을 것 같습니다 🎨</div><span class="no">6번 슬라이드</span></div>`,
-    broke: "결론이 1번 슬라이드의 질문(어떻게 줄일까?)에 답하지 않는다",
+    broke: "결론이 1번 슬라이드의 질문(어떻게 줄일까?)에 답하지 않는다.",
   },
   rules: {
     name: "운영 규칙", page: 9, color: "var(--rules)",
-    lecture: "함께 일하는 방식이 예측 가능해야 한다. 그 방식은 팀 안에서 만들어진다.",
     day: "D-8 초안 마감", from: "민준(조장)", mine: true,
     text: "괜찮아 어디든 올려 줘, 내가 나중에 합칠게",
     slide: `<div class="slide tpl-b"><div class="hd">다른 대학은 어떻게 했나</div><div class="bd"><ul><li>A대: 텀블러 지참 시 할인</li><li>B대: 컵 보증금제</li></ul></div><span class="no">3번 슬라이드</span></div><div class="files">3조_최종.pptx  3조_최종_진짜.pptx  3조_최종_진짜(2).pptx</div>`,
-    broke: "3번만 다른 템플릿과 글씨체, '최종' 파일이 3개",
+    broke: "3번만 다른 템플릿과 글씨체, '최종' 파일이 3개.",
   },
   commitment: {
     name: "헌신", page: 8, color: "var(--commitment)",
-    lecture: "두려움이나 위협이 아니라, 동기부여된 분위기 속에서 해야 할 일을 기꺼이 맡는다.",
     day: "D-6 중간 점검", from: "지호", mine: false,
     text: "6명? 이 정도면 무임승차 아님? ㅋㅋ",
     slide: `<div class="slide"><div class="hd">설문: 왜 텀블러를 안 쓸까?</div><div class="bd">응답 6명<div class="ph">그래프 준비 중…</div></div><span class="no">4번 슬라이드</span></div>`,
-    broke: "막혔다고 말하지 못한 하은의 설문이 응답 6명 그대로 남았다",
+    broke: "막혔다고 말하지 못한 하은의 설문이 응답 6명 그대로 남았다.",
   },
   interdependence: {
     name: "상호의존성", page: 10, color: "var(--interdependence)",
-    lecture: "팀 전체가 함께 성공하거나 실패한다. 동료가 어떻게 하고 있는지도 살펴야 한다.",
     day: "D-4 숫자가 다르다", from: "도윤", mine: false,
     text: "뭐 각자 파트니까 내가 건드릴 건 아니지 ㅋㅋ",
     slide: `<div class="slide"><div class="hd">제안하면 얼마나 줄까?</div><div class="bd"><div class="calc">하루 800개 × 30% = <b>240개</b> 절감</div></div><span class="no">5번 슬라이드</span></div>`,
-    broke: "앞의 2번은 하루 3,000개인데 5번은 800개로 계산했다",
+    broke: "앞의 2번은 하루 3,000개인데 5번은 800개로 계산했다.",
   },
 };
-const ORDER = ["purpose", "rules", "commitment", "interdependence"];   // 3조의 열흘에서 시험받는 순서
+const ORDER = ["purpose", "rules", "commitment", "interdependence"];  // 열흘 동안 시험받는 순서
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-
 const pills = document.getElementById("pills");
 ORDER.forEach((k) => {
   const b = document.createElement("button");
-  b.type = "button"; b.className = "pill"; b.dataset.k = k; b.textContent = CONDS[k].name;
+  b.type = "button"; b.className = "pill"; b.dataset.k = k;
+  b.innerHTML = `<i style="background:${CONDS[k].color}"></i>${CONDS[k].name}`;
   b.onclick = () => show(k);
   pills.append(b);
 });
-
 function show(k, instant) {
   const c = CONDS[k];
   pills.querySelectorAll(".pill").forEach((b) => {
@@ -247,18 +189,12 @@ function show(k, instant) {
     chat.innerHTML = `<span class="day">${c.day}</span><div class="who">${c.from}</div><div class="bb"></div>`;
     chat.querySelector(".bb").textContent = c.text;
     document.getElementById("slideBox").innerHTML = c.slide;
-    document.getElementById("verdict").innerHTML = `<b style="color:${c.color}">${c.name}이 무너졌다</b><span>${c.broke} · 9주차 ${c.page}쪽</span>`;
+    document.getElementById("verdict").innerHTML = `<b style="color:${c.color}">${c.name}이 무너졌다 (9주차 ${c.page}쪽)</b>${c.broke}`;
     pair.classList.remove("swap");
   };
   if (reduce || instant) { paint(); return; }
   pair.classList.add("swap"); setTimeout(paint, 160);
 }
-
-document.getElementById("condRow").innerHTML = ["purpose", "commitment", "rules", "interdependence"].map((k) => {
-  const c = CONDS[k];
-  return `<div class="cond"><div class="name"><i style="background:${c.color}"></i>${c.name}</div><div class="page">9주차 ${c.page}쪽</div><p>${c.lecture}</p></div>`;
-}).join("");
-
 show("purpose", true);
 </script>
 </body>

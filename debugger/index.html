@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>팀 디버거: 3조의 발표는 왜 무너졌을까?</title>
+<title>팀 디버거 · 모임이 아닌, "팀"</title>
 <style>
   :root {
     --bg: #0f172a; --panel: #111827; --card: #1f2937; --ink: #e5e7eb; --muted: #94a3b8; --line: #334155;
@@ -164,16 +164,71 @@
     main { grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr) minmax(280px, .8fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "result log case"; }
     #view-case { border-top: 0; border-left: 1px solid var(--line); }
   }
+  header h1, .stats span { white-space: nowrap; }
+
+  /* ===== 공통 테마 (세 페이지 동일): 흰 바탕, 남색 글자, 노란 형광펜 하나 ===== */
+  :root {
+    --bg: #f3f5f9; --panel: #ffffff; --card: #ffffff; --ink: #1b2a4a; --muted: #5b6680; --line: #d9dee8; --tint: #eef1f6;
+    --accent: #ffe14d; --mark-edge: #e6c200; --chatbg: #d6e0eb;
+    --purpose: #3b82f6; --commitment: #ef6c4a; --rules: #8b5cf6; --interdependence: #10a37f;
+  }
+  body { background: var(--bg); color: var(--ink); }
+  .found span { border-color: var(--line); }
+  .found span.on { color: #fff; }
+  nav.tabs button[aria-selected="true"] { border-bottom-color: var(--ink); }
+  nav.tabs button.pulse { animation-name: pulse2; }
+  @keyframes pulse2 { 50% { background: #fff6c2; } }
+  .file { background: var(--panel); }
+  .file .f { background: var(--tint); }
+  .sv { box-shadow: 0 0 0 1px var(--line); }
+  .speech { color: var(--ink); }
+  .speech b { color: var(--ink); background: linear-gradient(transparent 55%, var(--accent) 55%); }
+  .controls button, .thumbs button, .btn, .conds button { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+  .thumbs button[aria-current="true"] { border: 2px solid var(--ink); }
+  .btn.primary { background: var(--accent); border-color: var(--mark-edge); color: var(--ink); }
+  .prompt b { color: var(--ink); background: linear-gradient(transparent 55%, var(--accent) 55%); }
+  .hint-on .hot { outline-color: #f59e0b; }
+  .case { background: #fff; border: 1px solid var(--line); border-left-width: 4px; }
+  .chain div { background: var(--tint); }
+  .toast { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .overlay { background: var(--bg); }
+  .bigstat div { background: #fff; border: 1px solid var(--line); }
+  .sitebar { display: none; }
+  .sitebar .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px; text-decoration: none; color: var(--ink); letter-spacing: -0.01em; }
+  .sitebar .dots { display: inline-grid; grid-template-columns: repeat(2, 7px); gap: 3px; }
+  .sitebar .dots i { width: 7px; height: 7px; border-radius: 2px; display: block; }
+  .sitebar nav { display: flex; gap: 4px; }
+  .sitebar nav a { font-size: 14px; text-decoration: none; color: var(--muted); padding: 6px 12px; border-radius: 8px; }
+  .sitebar nav a:hover { background: var(--tint); color: var(--ink); }
+  .sitebar nav a[aria-current="page"] { color: var(--ink); font-weight: 700; background: var(--tint); }
+  @media (min-width: 1024px) {
+    body { flex-direction: column; align-items: center; height: 100vh; height: 100dvh; overflow: hidden; }
+    .sitebar { align-self: stretch; height: 56px; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: #fff; border-bottom: 1px solid var(--line); }
+    .app { flex: 1; min-height: 0; height: auto; border-color: var(--line); background: var(--bg); }
+    header .home { display: none; }
+    #view-log { background: #eaf0f6; }
+    .desk-h { color: var(--ink); }
+    #view-log.flash { animation-name: flash2; }
+    @keyframes flash2 { 50% { background: #fff6c2; } }
+  }
+  @media (max-width: 520px) { .sub-h { display: none; } .stats { gap: 8px; } }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
+<div class="sitebar">
+  <a class="brand" href="../index.html">
+    <span class="dots" aria-hidden="true"><i style="background:var(--purpose)"></i><i style="background:var(--commitment)"></i><i style="background:var(--rules)"></i><i style="background:var(--interdependence)"></i></span>
+    모임이 아닌, "팀"
+  </a>
+  <nav><a href="../game/index.html">조장 시뮬레이터</a><a href="index.html" aria-current="page">팀 디버거</a></nav>
+</div>
 <div class="app" id="app">
   <header>
     <div class="hrow">
-      <h1>🔍 팀 디버거 · 3조 사건</h1>
+      <h1>🔍 팀 디버거<span class="sub-h"> · 3조 사건</span></h1>
       <a class="home" href="../index.html">처음으로</a>
-      <div class="stats"><span>⏱ <b id="time">0:00</b></span><span>헛짚음 <b id="miss">0</b></span></div>
+      <div class="stats"><span>⏱ <b id="time">0:00</b></span><span>헛짚음 <b id="miss">0</b></span><span>증거 <b id="evc">0/10</b></span></div>
     </div>
     <div class="found" id="found"></div>
   </header>
@@ -280,25 +335,41 @@ const SLIDES = [
     html: `<div class="t hot" data-hot="cover">일회용 컵,<br>우리 캠퍼스에서 줄일 수 있을까?</div><div class="g hot" data-hot="cover">3조 발표</div>` },
   { who: "지호", hd: "현황: 교내 일회용 컵", say: "캠퍼스 전체로 세면 하루 3,000개가 버려집니다.",
     html: `<div class="big hot" data-hot="num2">하루 3,000개</div><br><span class="src hot" data-hot="ok-src">캠퍼스 전체 카페 합계 (가상 데이터)</span>` },
-  { who: "도윤", hd: "다른 대학은 어떻게 했나", tpl: "b", hdHot: "rules", bodyHot: "rules", say: "다른 대학들은 이렇게 하고 있습니다.",
+  { who: "도윤", hd: "다른 대학은 어떻게 했나", tpl: "b", hdHot: "e-r3", bodyHot: "e-r3", say: "다른 대학들은 이렇게 하고 있습니다.",
     html: `<ul class="hot" data-hot="ok-cases"><li>A대: 텀블러 지참 시 할인</li><li>B대: 컵 보증금제</li><li>C대: 세척대 설치</li></ul><br><span class="src">가상 사례</span>` },
   { who: "하은", hd: "설문: 왜 텀블러를 안 쓸까?", say: "응답이… 6명이라서요. 그래프는 아직…",
-    html: `<p class="hot" data-hot="commitment" style="display:inline-block;margin:0;padding:0 4px">응답 6명</p><div class="ph hot" data-hot="commitment">그래프 준비 중…</div>` },
+    html: `<p class="hot" data-hot="e-c4" style="display:inline-block;margin:0;padding:0 4px">응답 6명</p><div class="ph hot" data-hot="e-c4">그래프 준비 중…</div>` },
   { who: "린", hd: "제안하면 얼마나 줄까?", say: "하루 800개 중 30%, 240개를 줄일 수 있습니다.",
-    html: `<div class="calc hot" data-hot="interdependence">하루 800개 × 30% = <b>240개</b> 절감</div><br><span class="src">할인 제도 참여율 30% 가정 (가상)</span><span class="stamp hot" data-hot="rules">수정 전 그래프 v1</span>` },
-  { who: "민준", hd: "결론: 텀블러 굿즈 디자인 공모전을 열자!", hdHot: "purpose", say: "그래서 저희는 굿즈 공모전을 제안합니다!",
-    html: `<p class="hot" data-hot="purpose" style="display:inline-block;padding:0 4px">재밌고 참여도 높을 것 같습니다 🎨</p>` },
+    html: `<div class="calc hot" data-hot="e-i5">하루 800개 × 30% = <b>240개</b> 절감</div><br><span class="src">할인 제도 참여율 30% 가정 (가상)</span><span class="stamp hot" data-hot="e-r5">수정 전 그래프 v1</span>` },
+  { who: "민준", hd: "결론: 텀블러 굿즈 디자인 공모전을 열자!", hdHot: "e-p6", say: "그래서 저희는 굿즈 공모전을 제안합니다!",
+    html: `<p class="hot" data-hot="e-p6" style="display:inline-block;padding:0 4px">재밌고 참여도 높을 것 같습니다 🎨</p>` },
   { who: "질의응답", kind: "qa", hd: "질의응답", say: "",
-    html: `<div class="q hot" data-hot="rules" style="color:#fca5a5">(발표 시작 전, 3분 동안 최신 파일을 찾았다)</div>
-      <div class="q hot" data-hot="purpose">❓ 교수님: 그래서 이 발표, 누구한테 뭘 하자는 거예요?<br><span style="color:#9ca3af">↳ 민준: 아… 그게…</span></div>
-      <div class="q hot" data-hot="commitment">❓ 교수님: 설문 6명으로 결론 내기는 어렵지 않나요?<br><span style="color:#9ca3af">↳ 하은: …네</span></div>
-      <div class="q hot" data-hot="interdependence">❓ 교수님: 2번이랑 5번 숫자가 다른데 어느 게 맞아요?<br><span style="color:#9ca3af">↳ 지호·린이 서로를 쳐다봤다.</span></div>` },
+    html: `<div class="q hot" data-hot="e-rqa" style="color:#fca5a5">(발표 시작 전, 3분 동안 최신 파일을 찾았다)</div>
+      <div class="q hot" data-hot="e-pqa">❓ 교수님: 그래서 이 발표, 누구한테 뭘 하자는 거예요?<br><span style="color:#9ca3af">↳ 민준: 아… 그게…</span></div>
+      <div class="q hot" data-hot="e-cqa">❓ 교수님: 설문 6명으로 결론 내기는 어렵지 않나요?<br><span style="color:#9ca3af">↳ 하은: …네</span></div>
+      <div class="q hot" data-hot="e-iqa">❓ 교수님: 2번이랑 5번 숫자가 다른데 어느 게 맞아요?<br><span style="color:#9ca3af">↳ 지호·린이 서로를 쳐다봤다.</span></div>` },
 ];
 // 단서: 틀린 곳은 아니지만 뒤에서 확인할 거리. 헛짚음으로 세지 않는다.
 const CLUES = {
   cover: "표지 질문은 괜찮아. 발표가 끝까지 이 질문에 답했는지 마지막 슬라이드까지 보자.",
   num2: "이 숫자는 지호가 D-4에 새로 센 맞는 숫자야. 뒤 슬라이드도 같은 숫자를 썼는지 보자.",
 };
+// 증거 10개. 조건마다 첫 증거로 사건을 열고(원인 추적), 나머지는 추가 증거로 모은다.
+const EVIDENCE = {
+  "e-p6":    { cond: "purpose",         label: "6번 결론(굿즈 공모전)이 1번의 질문(어떻게 줄일까?)에 답하지 않는다" },
+  "e-pqa":   { cond: "purpose",         label: "질의응답: \"누구한테 뭘 하자는 거예요?\"에 답하지 못했다" },
+  "e-c4":    { cond: "commitment",      label: "4번 설문: 응답 6명, 그래프 자리는 비어 있다" },
+  "e-cqa":   { cond: "commitment",      label: "질의응답: 설문 질문에 하은은 \"…네\"만 했다" },
+  "e-rfile": { cond: "rules",           label: "제출 폴더에 '최종' 파일이 3개" },
+  "e-r3":    { cond: "rules",           label: "3번만 다른 템플릿과 글씨체" },
+  "e-r5":    { cond: "rules",           label: "5번에 수정 전 그래프(v1)가 들어갔다" },
+  "e-rqa":   { cond: "rules",           label: "발표 시작 전, 3분 동안 최신 파일을 찾았다" },
+  "e-i5":    { cond: "interdependence", label: "5번은 800개 기준으로 계산했다 (앞의 2번은 3,000개)" },
+  "e-iqa":   { cond: "interdependence", label: "질의응답: \"2번이랑 5번 숫자가 다른데 어느 게 맞아요?\"" },
+};
+const EV_TOTAL = Object.keys(EVIDENCE).length;
+const evOf = (k) => Object.keys(EVIDENCE).filter((id) => EVIDENCE[id].cond === k);
+const foundOf = (k) => evOf(k).filter((id) => state.found.has(id));
 const DECOYS = {
   "ok-src": "출처 표시는 괜찮다. 이 숫자를 다른 슬라이드도 똑같이 썼을까?",
   "ok-cases": "사례 내용 자체는 괜찮다. 이 슬라이드의 '모양'을 다른 슬라이드와 비교해 보자.",
@@ -377,7 +448,7 @@ const CROSS = [
 /* =========================================================
    상태
    ========================================================= */
-const state = { started: false, t0: 0, timer: null, miss: 0, solved: {}, pending: null, step: "find", slide: 0, playing: null, hint: false };
+const state = { started: false, t0: 0, timer: null, miss: 0, solved: {}, found: new Set(), pending: null, pendingEv: null, solveSecs: null, step: "find", slide: 0, playing: null, hint: false };
 const $ = (id) => document.getElementById(id);
 function el(tag, cls, html) { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2800); }
@@ -398,10 +469,11 @@ document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("
 function renderFound() {
   $("found").innerHTML = "";
   ORDER.forEach((k, i) => {
-    const s = el("span", state.solved[k] ? "on" : "", state.solved[k] ? CONDITIONS[k].name : `버그 ${i + 1}`);
+    const s = el("span", state.solved[k] ? "on" : "", state.solved[k] ? `${CONDITIONS[k].name} ${foundOf(k).length}/${evOf(k).length}` : `버그 ${i + 1}`);
     if (state.solved[k]) s.style.background = CONDITIONS[k].color;
     $("found").append(s);
   });
+  $("evc").textContent = `${state.found.size}/${EV_TOTAL}`;
 }
 
 /* ---------- 발표 PPT ---------- */
@@ -415,7 +487,7 @@ function renderResult() {
   const v = $("view-result"); v.innerHTML = "";
   v.append(el("div", "desk-h", "📽 발표 PPT <span>이상한 곳을 눌러 보세요</span>"));
   const file = el("div", "file hot", "📁 제출 폴더: " + FILES.map((f) => `<span class="f">${f}</span>`).join(""));
-  file.dataset.hot = "rules"; v.append(file);
+  file.dataset.hot = "e-rfile"; v.append(file);
   const s = SLIDES[state.slide];
   const wrap = el("div", "fitbox", slideHTML(s)); wrap.id = "svbox"; v.append(wrap);
   v.append(el("div", "speech", s.kind === "qa" ? "🎤 <b>질의응답</b>" : `🎤 <b>${s.who}</b>: "${s.say}"`));
@@ -434,7 +506,7 @@ function renderResult() {
   v.querySelectorAll("[data-hot]").forEach((n) => {
     const k = n.dataset.hot;
     if (n.id !== "sv") n.classList.add("hot");
-    if (state.solved[k]) n.classList.add("solved");
+    if (state.found.has(k)) n.classList.add("solved");
   });
   v.classList.toggle("hint-on", state.hint);
   // 클릭: 가장 안쪽의 data-hot을 쓴다
@@ -443,7 +515,7 @@ function renderResult() {
     if (!n) { toast("여기는 이상 없어 보인다. 내용, 숫자, 슬라이드 모양을 살펴보자."); return; }
     spot(n.dataset.hot);
   };
-  file.onclick = () => spot("rules");
+  file.onclick = () => spot("e-rfile");
   fitSlide();
 }
 const SLIDE_BASE = 440;
@@ -451,7 +523,8 @@ const isDesk = () => matchMedia("(min-width: 1024px)").matches;
 function fitSlide() {
   const box = $("svbox"); const sv = $("sv"); if (!box || !sv) return;
   // 데스크톱에서는 칸 높이 안에 컨트롤까지 보이도록 슬라이드 크기를 제한한다
-  let w = box.parentElement.clientWidth - (isDesk() ? 40 : 0);
+  const ps = getComputedStyle(box.parentElement);
+  let w = box.parentElement.clientWidth - parseFloat(ps.paddingLeft) - parseFloat(ps.paddingRight);
   if (isDesk()) w = Math.min(w, ($("view-result").clientHeight - 210) * 16 / 9);
   w = Math.max(w, 280);
   box.style.width = w + "px";
@@ -506,8 +579,9 @@ function renderCase() {
     card.innerHTML = `<h3 style="color:${c.color}">${c.name} · 9주차 ${c.page}쪽</h3>
       <div class="chain">
         ${roots.map((r) => `<div>💬 ${dayOf(r.id)} ${MEMBERS[r.from].name}: "${r.text}"</div>`).join('<div class="arr">그리고</div>')}
-        <div class="arr">↓ 이 말 때문에</div>
-        <div>📽 ${b.evidence}</div>
+        <div class="arr">↓ 이 말 때문에 발표에서 (증거 ${foundOf(k).length}/${evOf(k).length})</div>
+        ${foundOf(k).map((id) => `<div>📽 ${EVIDENCE[id].label}</div>`).join("")}
+        ${foundOf(k).length < evOf(k).length ? `<div class="arr">❔ 아직 못 찾은 증거 ${evOf(k).length - foundOf(k).length}개</div>` : ""}
       </div>
       <p><b>강의에서는</b> ${b.lecture}</p>
       <p><b>이렇게 했다면</b> ${b.tip}</p>`;
@@ -523,21 +597,37 @@ function setPrompt(html, actions = []) {
 function btn(text, fn, primary) { const b = el("button", "btn" + (primary ? " primary" : ""), text); b.type = "button"; b.onclick = fn; return b; }
 
 function promptFind() {
-  state.step = "find"; state.pending = null; document.body.classList.remove("tracing");
+  state.step = "find"; state.pending = null; state.pendingEv = null; document.body.classList.remove("tracing");
   const left = ORDER.length - Object.keys(state.solved).length;
-  setPrompt(`📽 발표 PPT에서 <b>이상한 곳</b>을 찾아 누르세요. (남은 버그 ${left}개)`, [
-    btn(state.hint ? "힌트 끄기" : "💡 힌트: 누를 수 있는 곳 보기", () => { state.hint = !state.hint; renderResult(); promptFind(); }),
-  ]);
+  const hintBtn = btn(state.hint ? "힌트 끄기" : "💡 힌트: 누를 수 있는 곳 보기", () => { state.hint = !state.hint; renderResult(); promptFind(); });
+  if (left === 0) {
+    setPrompt(`🔎 버그 4개는 다 풀었어요. <b>남은 증거</b>를 찾아 누르면 사건 파일에 더해져요. (증거 ${state.found.size}/${EV_TOTAL})`, [hintBtn, btn("최종 보고서", finish, true)]);
+    return;
+  }
+  setPrompt(`📽 발표 PPT에서 <b>이상한 곳</b>을 찾아 누르세요. (남은 버그 ${left}개 · 증거 ${state.found.size}/${EV_TOTAL})`, [hintBtn]);
 }
 function spot(key) {
   if (!state.started) return;
   if (state.step !== "find") { toast("먼저 지금 버그의 원인을 찾아 주세요."); return; }
   if (CLUES[key]) { toast("🔎 " + CLUES[key]); return; }
   if (DECOYS[key]) { toast(DECOYS[key]); miss(); return; }
-  if (state.solved[key]) { toast("이미 해결한 버그예요. 사건 파일에서 볼 수 있어요."); return; }
-  state.pending = key; state.step = "trace";
+  const ev = EVIDENCE[key]; if (!ev) return;
+  if (state.found.has(key)) { toast("이미 찾은 증거예요. 사건 파일에서 볼 수 있어요."); return; }
+  const c = CONDITIONS[ev.cond];
+  state.found.add(key);
+  if (state.solved[ev.cond]) {
+    // 이미 원인을 찾은 조건: 추적 없이 증거만 더한다
+    renderFound(); renderResult(); renderCase();
+    toast(`✅ ${c.name} 증거 추가 (${foundOf(ev.cond).length}/${evOf(ev.cond).length}): ${ev.label}`);
+    if (state.found.size === EV_TOTAL) {
+      setPrompt(`🏅 <b>완벽 수사!</b> 증거 ${EV_TOTAL}개를 모두 찾았어요. 한 조건이 무너지면 발표 여러 곳에서 드러난다.`, [btn("사건 파일 보기", () => tab("case")), btn("최종 보고서", finish, true)]);
+    } else promptFind();
+    return;
+  }
+  state.pending = ev.cond; state.pendingEv = key; state.step = "trace";
   if (state.playing) togglePlay();
-  setPrompt(`🐞 <b>버그 발견!</b> ${BUGS[key].evidence}<br>💬 이 문제가 <b>시작된 메시지</b>를 단톡방 기록에서 찾아 누르세요.`, [
+  renderFound(); renderResult();
+  setPrompt(`🐞 <b>버그 발견!</b> ${ev.label}<br>💬 이 문제가 <b>시작된 메시지</b>를 단톡방 기록에서 찾아 누르세요.`, [
     btn("발표 다시 보기", () => tab("result")), btn("단톡방 기록 열기", () => tab("log"), true),
   ]);
   renderLog();
@@ -573,7 +663,9 @@ function answer(k) {
   state.solved[key] = true;
   renderFound(); renderResult(); renderLog(); renderCase();
   const c = CONDITIONS[key]; const done = Object.keys(state.solved).length === ORDER.length;
-  setPrompt(`🎉 <b style="color:${c.color}">${c.name}</b>이 무너진 버그를 해결했어요. 사건 파일에 기록했습니다.`, [
+  if (done && state.solveSecs == null) { state.solveSecs = Math.floor((Date.now() - state.t0) / 1000); clearInterval(state.timer); }
+  const more = evOf(key).length - foundOf(key).length;
+  setPrompt(`🎉 <b style="color:${c.color}">${c.name}</b>이 무너진 버그를 해결했어요.${more ? ` 이 조건의 증거가 발표 어딘가에 ${more}개 더 있어요.` : ""}`, [
     btn("사건 파일 보기", () => tab("case")),
     btn(done ? "최종 보고서" : "다음 버그 찾기", () => { if (done) finish(); else { tab("result"); promptFind(); } }, true),
   ]);
@@ -591,7 +683,8 @@ function intro() {
       <li>💬 <b>단톡방 기록</b>에서 그 문제가 <b>시작된 메시지</b>를 찾는다.</li>
       <li>🧩 그 말 때문에 무너진 <b>팀의 조건</b>을 고른다.</li>
     </ol>
-    <p>버그는 4개. 9주차에서 배운 팀의 네 조건(공동 목적·헌신·운영 규칙·상호의존성)이 하나씩, 서로 다른 슬라이드에 숨어 있다. 헛짚으면 기록이 남으니 신중하게!</p>
+    <p>버그는 4개. 9주차에서 배운 팀의 네 조건(공동 목적·헌신·운영 규칙·상호의존성)이 하나씩 무너졌다. 헛짚으면 기록이 남으니 신중하게!</p>
+    <p>무너진 조건은 발표 <b>여러 곳</b>에 흔적을 남긴다. 증거 하나만 찾아도 원인을 추적할 수 있고, 같은 조건의 다른 증거는 찾을 때마다 사건 파일에 더해진다. 증거 ${EV_TOTAL}개를 다 모으면 완벽 수사.</p>
     <p class="muted">3조와 조원, 슬라이드 속 수치는 모두 가상입니다.</p>`;
   $("stage").append(o);
   setPrompt("준비되면 시작하세요. 시간이 기록됩니다.", [btn("수사 시작", start, true)]);
@@ -602,28 +695,31 @@ function start() {
   tab("result"); promptFind();
 }
 function finish() {
-  $("toast").classList.remove("show");
+  $("toast").classList.remove("show"); $("overlay")?.remove();
   clearInterval(state.timer); if (state.playing) togglePlay();
-  const secs = Math.floor((Date.now() - state.t0) / 1000);
+  const secs = state.solveSecs ?? Math.floor((Date.now() - state.t0) / 1000);
+  const perfect = state.found.size === EV_TOTAL;
   const o = el("div", "overlay"); o.id = "overlay";
   o.innerHTML = `
     <h2>📋 최종 보고서</h2>
-    <div class="bigstat"><div><b>${fmt(secs)}</b>걸린 시간</div><div><b>${state.miss}</b>헛짚음</div><div><b>4/4</b>버그</div></div>
+    <div class="bigstat"><div><b>${fmt(secs)}</b>버그 4개 푼 시간</div><div><b>${state.miss}</b>헛짚음</div><div><b>${state.found.size}/${EV_TOTAL}</b>증거</div></div>
+    ${perfect ? `<p>🏅 <b>완벽 수사.</b> 증거를 모두 찾았다.</p>` : `<p>아직 못 찾은 증거가 ${EV_TOTAL - state.found.size}개 있다. 한 조건이 무너지면 발표 여러 곳에 흔적이 남는다.</p>`}
     <p>3조는 게으른 조가 아니었다. 5명 모두 자기 슬라이드는 만들었다. 무너진 건 <b>함께 일하는 조건</b>이었다.</p>
     <h3>원인은 조장 한 사람이 아니었다</h3>
     <p>목적과 규칙은 조장의 말에서 시작됐다. 헌신은 지호의 "무임승차" 농담과 거기 맞장구친 조장의 말에서, 상호의존성은 도윤의 "각자 파트니까"와 조장의 "각자 책임"에서 시작됐다. 팀의 조건은 모두가 함께 만들고, 함께 무너뜨린다.</p>
     <h3>버그는 따로따로가 아니었다</h3>
     <ul class="links">${CROSS.map((c) => `<li>${c.text}<br><span class="muted">${c.conds.map((k) => CONDITIONS[k].name).join(" → ")}</span></li>`).join("")}</ul>
     <p>모든 모임이 팀은 아니다. 팀은 단순히 지시를 따르는 사람들의 모임이 아니라, 개인의 이익을 넘어 함께 무언가를 이루는 집단이다. <span class="muted">(9주차 6쪽)</span></p>
-    <p class="muted">기록: ${fmt(secs)} · 헛짚음 ${state.miss}회. 다른 조와 비교해 보세요.</p>`;
+    <p class="muted">기록: ${fmt(secs)} · 헛짚음 ${state.miss}회 · 증거 ${state.found.size}/${EV_TOTAL}. 다른 조와 비교해 보세요.</p>`;
   $("stage").append(o);
-  setPrompt("수사 완료! 사건 파일 탭에서 버그별 원인을 다시 볼 수 있어요.", [
+  setPrompt(perfect ? "완벽 수사! 사건 파일에서 버그별 원인과 증거를 다시 볼 수 있어요." : "수사 완료! 남은 증거를 더 찾거나 처음부터 다시 할 수 있어요.", [
+    ...(perfect ? [] : [btn("남은 증거 찾기", () => { $("overlay")?.remove(); tab("result"); promptFind(); })]),
     btn("사건 파일 보기", () => { $("overlay")?.remove(); tab("case"); }), btn("처음부터 다시", reset, true),
   ]);
 }
 function reset() {
   clearInterval(state.timer); if (state.playing) togglePlay();
-  Object.assign(state, { started: false, miss: 0, solved: {}, pending: null, step: "find", slide: 0, hint: false });
+  Object.assign(state, { started: false, miss: 0, solved: {}, found: new Set(), pending: null, pendingEv: null, solveSecs: null, step: "find", slide: 0, hint: false });
   $("time").textContent = "0:00"; $("miss").textContent = "0"; $("overlay")?.remove();
   renderAll(); intro();
 }
@@ -633,6 +729,10 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") go(state.slide - 1);
 });
 function renderAll() { renderFound(); renderResult(); renderLog(); renderCase(); }
+if (location.protocol !== "file:" && !location.hostname.endsWith("github.io")) {
+  document.querySelectorAll(".home, .sitebar nav").forEach((a) => (a.style.display = "none"));
+  document.querySelector(".sitebar .brand").removeAttribute("href");
+}
 renderAll();
 intro();
 </script>
